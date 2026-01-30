@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="public/assets/logo.png" alt="ExplainIt" height="40" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/assets/brand/logo-dark.svg" />
+    <img src="public/assets/brand/logo-light.svg" alt="ExplainIt" height="32" />
+  </picture>
 </p>
 
 <p align="center">
