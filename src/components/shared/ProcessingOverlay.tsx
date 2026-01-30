@@ -23,20 +23,20 @@ export default function ProcessingOverlay() {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#08080A]/90 backdrop-blur-sm">
-      <div className="card p-8 md:p-10 w-full max-w-md mx-4 text-center">
-        <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#FF5C00] to-[#FF7A00] flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#08080A]/90 backdrop-blur-sm p-4">
+      <div className="card p-8 md:p-10 w-full max-w-sm min-w-[320px]">
+        <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-linear-to-br from-[#FF5C00] to-[#FF7A00] flex items-center justify-center">
           <Brain size={32} className="text-white animate-pulse" />
         </div>
         
-        <h2 className="text-xl font-semibold text-white mb-2">
+        <h2 className="text-xl font-semibold text-white mb-2 text-center">
           Generating your explanation
         </h2>
-        <p className="text-[#6B6B70] mb-8">
+        <p className="text-[#6B6B70] mb-8 text-center">
           This usually takes a few seconds...
         </p>
         
-        <div className="space-y-4 text-left">
+        <div className="space-y-4">
           {steps.map((step) => {
             const isComplete = step.id < currentStep;
             const isActive = step.id === currentStep;
@@ -47,7 +47,7 @@ export default function ProcessingOverlay() {
                 className="flex items-center gap-3"
               >
                 <div 
-                  className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
+                  className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors ${
                     isComplete 
                       ? 'bg-[#22C55E]' 
                       : isActive 
