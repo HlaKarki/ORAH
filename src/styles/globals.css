@@ -3,6 +3,19 @@
 @theme {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  
+  /* Custom color palette from design */
+  --color-bg-primary: #08080A;
+  --color-bg-secondary: #0C0C0E;
+  --color-bg-tertiary: #111113;
+  --color-border-primary: #1F1F23;
+  --color-border-secondary: #2A2A2E;
+  --color-accent: #FF5C00;
+  --color-accent-hover: #FF8A4C;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #ADADB0;
+  --color-text-muted: #6B6B70;
+  --color-text-dim: #4A4A4E;
 }
 
 html,
@@ -11,8 +24,8 @@ body {
 }
 
 body {
-  background: #111827;
-  color: white;
+  background: #08080A;
+  color: #FFFFFF;
 }
 
 @keyframes recording-pulse {
@@ -28,4 +41,14 @@ body {
 
 .recording-pulse {
   animation: recording-pulse 2s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }

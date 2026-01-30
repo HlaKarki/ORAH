@@ -137,56 +137,56 @@ export default function QuizScreen({ topic, onComplete, onGenerateMore }: QuizSc
     const finalScore = Math.round((score / questions.length) * 10)
     
     return (
-      <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 md:p-10 border border-gray-700">
+      <div className="bg-[#111113] border border-[#1F1F23] rounded-2xl p-6 md:p-10">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-2">Quiz Complete! 🎉</h2>
-          <p className="text-gray-400">Here's how you did</p>
+          <h2 className="text-3xl font-bold mb-2 text-white">Quiz Complete! 🎉</h2>
+          <p className="text-[#6B6B70]">Here's how you did</p>
         </div>
 
         {/* Score Display */}
-        <div className="bg-gradient-to-br from-purple-900/50 to-pink-900/50 rounded-2xl p-8 mb-6 text-center">
+        <div className="bg-gradient-to-br from-[#FF5C00]/20 to-[#FF8A4C]/20 border border-[#FF5C00]/30 rounded-2xl p-8 mb-6 text-center">
           <div className="text-6xl font-bold mb-2">
-            <span className={percentage >= 80 ? 'text-green-400' : percentage >= 60 ? 'text-yellow-400' : 'text-orange-400'}>
+            <span className={percentage >= 80 ? 'text-green-400' : percentage >= 60 ? 'text-yellow-400' : 'text-[#FF5C00]'}>
               {score}/{questions.length}
             </span>
           </div>
-          <p className="text-2xl text-gray-300 mb-2">{percentage.toFixed(0)}% Correct</p>
-          <p className="text-lg text-purple-300">Score: {finalScore}/10</p>
+          <p className="text-2xl text-[#ADADB0] mb-2">{percentage.toFixed(0)}% Correct</p>
+          <p className="text-lg text-[#FF5C00]">Score: {finalScore}/10</p>
         </div>
 
         {/* Performance Message */}
-        <div className="bg-gray-900/50 rounded-xl p-6 mb-6 text-center">
+        <div className="bg-[#0C0C0E] border border-[#2A2A2E] rounded-xl p-6 mb-6 text-center">
           {percentage >= 80 && (
             <>
               <p className="text-2xl mb-2">🌟 Excellent Work!</p>
-              <p className="text-gray-400">You have a strong understanding of this topic.</p>
+              <p className="text-[#6B6B70]">You have a strong understanding of this topic.</p>
             </>
           )}
           {percentage >= 60 && percentage < 80 && (
             <>
               <p className="text-2xl mb-2">👍 Good Job!</p>
-              <p className="text-gray-400">You're on the right track. Review the questions you missed.</p>
+              <p className="text-[#6B6B70]">You're on the right track. Review the questions you missed.</p>
             </>
           )}
           {percentage < 60 && (
             <>
               <p className="text-2xl mb-2">📚 Keep Learning!</p>
-              <p className="text-gray-400">Don't worry! Review the material and try again.</p>
+              <p className="text-[#6B6B70]">Don't worry! Review the material and try again.</p>
             </>
           )}
         </div>
 
         {/* Answer Review */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-4 text-gray-300">Review Your Answers</h3>
+          <h3 className="text-lg font-semibold mb-4 text-[#ADADB0]">Review Your Answers</h3>
           <div className="space-y-3 max-h-80 overflow-y-auto">
             {answers.map((answer, index) => (
               <div 
                 key={index}
-                className={`p-4 rounded-lg border-2 ${
+                className={`p-4 rounded-xl border ${
                   answer.isCorrect 
-                    ? 'bg-green-900/20 border-green-500/30' 
-                    : 'bg-red-900/20 border-red-500/30'
+                    ? 'bg-green-500/10 border-green-500/30' 
+                    : 'bg-red-500/10 border-red-500/30'
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -216,18 +216,19 @@ export default function QuizScreen({ topic, onComplete, onGenerateMore }: QuizSc
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleRetakeQuiz}
-            className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold
+            className="flex-1 bg-[#1A1A1D] hover:bg-[#1F1F23] border border-[#2A2A2E] text-white font-semibold
                      py-4 px-6 rounded-xl transition-all"
           >
             Retake Quiz
           </button>
           <button
             onClick={handleFinishQuiz}
-            className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600
-                     hover:from-purple-500 hover:to-pink-500
-                     text-white font-semibold py-4 px-6 rounded-xl transition-all"
+            className="flex-1 bg-gradient-to-br from-[#FF5C00] to-[#FF8A4C]
+                     hover:from-[#FF6A10] hover:to-[#FF9A5C]
+                     text-white font-semibold py-4 px-6 rounded-xl transition-all
+                     shadow-lg shadow-[#FF5C00]/20"
           >
-            Done
+            Continue Learning
           </button>
         </div>
       </div>
@@ -237,24 +238,24 @@ export default function QuizScreen({ topic, onComplete, onGenerateMore }: QuizSc
   // Quiz setup screen
   if (!quizStarted) {
     return (
-      <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 md:p-10 border border-gray-700">
+      <div className="bg-[#111113] border border-[#1F1F23] rounded-2xl p-6 md:p-10">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-10 h-10 bg-gradient-to-br from-[#FF5C00] to-[#FF8A4C] rounded-xl flex items-center justify-center">
+            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-semibold">Practice Quiz</h2>
+          <h2 className="text-2xl font-semibold text-white">Practice Quiz</h2>
         </div>
 
-        <div className="bg-blue-900/30 border border-blue-500/30 rounded-xl p-6 mb-6">
-          <p className="text-blue-300 text-sm font-medium mb-2">TOPIC:</p>
+        <div className="bg-[#FF5C00]/10 border border-[#FF5C00]/30 rounded-xl p-6 mb-6">
+          <p className="text-[#FF5C00] text-xs font-semibold tracking-wider mb-2">TOPIC</p>
           <p className="text-xl text-white font-medium">{topic}</p>
         </div>
 
         <div className="mb-6">
-          <label className="block text-gray-300 text-sm font-medium mb-3">
+          <label className="block text-[#ADADB0] text-sm font-medium mb-3">
             Select Difficulty:
           </label>
           <div className="grid grid-cols-3 gap-3">
@@ -264,8 +265,8 @@ export default function QuizScreen({ topic, onComplete, onGenerateMore }: QuizSc
                 onClick={() => setDifficulty(diff)}
                 className={`py-3 px-4 rounded-xl font-medium transition-all
                   ${difficulty === diff
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white'
-                    : 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
+                    ? 'bg-gradient-to-br from-[#FF5C00] to-[#FF8A4C] text-white shadow-lg shadow-[#FF5C00]/20'
+                    : 'bg-[#1A1A1D] border border-[#2A2A2E] text-[#ADADB0] hover:bg-[#1F1F23]'
                   }`}
               >
                 {diff.charAt(0).toUpperCase() + diff.slice(1)}
@@ -277,12 +278,16 @@ export default function QuizScreen({ topic, onComplete, onGenerateMore }: QuizSc
         <button
           onClick={() => generateQuiz(difficulty, 5)}
           disabled={isGenerating}
-          className="w-full bg-gradient-to-r from-blue-600 to-cyan-600
-                   hover:from-blue-500 hover:to-cyan-500
-                   disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed
+          className="w-full bg-gradient-to-br from-[#FF5C00] to-[#FF8A4C]
+                   hover:from-[#FF6A10] hover:to-[#FF9A5C]
+                   disabled:from-[#2A2A2D] disabled:to-[#2A2A2D] disabled:cursor-not-allowed
                    text-white font-semibold py-4 px-6 rounded-xl text-lg
-                   transition-all duration-200"
+                   transition-all duration-200 shadow-lg shadow-[#FF5C00]/20
+                   disabled:shadow-none flex items-center justify-center gap-2"
         >
+          {isGenerating && (
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          )}
           {isGenerating ? 'Generating Quiz...' : 'Start Quiz (5 Questions)'}
         </button>
       </div>
@@ -291,16 +296,16 @@ export default function QuizScreen({ topic, onComplete, onGenerateMore }: QuizSc
 
   // Quiz in progress
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 md:p-10 border border-gray-700">
+    <div className="bg-[#111113] border border-[#1F1F23] rounded-2xl p-6 md:p-10">
       {/* Progress */}
       <div className="mb-6">
-        <div className="flex justify-between text-sm text-gray-400 mb-2">
+        <div className="flex justify-between text-sm text-[#6B6B70] mb-2">
           <span>Question {currentQuestionIndex + 1} of {questions.length}</span>
           <span>Score: {score}/{questions.length}</span>
         </div>
-        <div className="w-full bg-gray-700 rounded-full h-2">
+        <div className="w-full bg-[#2A2A2D] rounded-full h-2">
           <div 
-            className="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full transition-all"
+            className="bg-gradient-to-r from-[#FF5C00] to-[#FF8A4C] h-2 rounded-full transition-all"
             style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
           />
         </div>
@@ -309,8 +314,8 @@ export default function QuizScreen({ topic, onComplete, onGenerateMore }: QuizSc
       {/* Question */}
       {currentQuestion && (
         <>
-          <div className="bg-gray-900/50 rounded-xl p-6 mb-6">
-            <p className="text-xl text-white font-medium mb-6">
+          <div className="bg-[#0C0C0E] border border-[#2A2A2E] rounded-xl p-6 mb-6">
+            <p className="text-xl text-white font-medium mb-6 leading-relaxed">
               {currentQuestion.question}
             </p>
 
@@ -326,26 +331,26 @@ export default function QuizScreen({ topic, onComplete, onGenerateMore }: QuizSc
                     key={key}
                     onClick={() => handleAnswerSelect(key)}
                     disabled={showExplanation}
-                    className={`w-full text-left p-4 rounded-lg transition-all
+                    className={`w-full text-left p-4 rounded-xl transition-all
                       ${!showResult && isSelected
-                        ? 'bg-blue-600 border-2 border-blue-400'
+                        ? 'bg-[#FF5C00]/20 border-2 border-[#FF5C00]'
                         : !showResult
-                          ? 'bg-gray-700/50 border-2 border-gray-600 hover:bg-gray-700 hover:border-gray-500'
+                          ? 'bg-[#1A1A1D] border-2 border-[#2A2A2E] hover:bg-[#1F1F23] hover:border-[#3A3A3E]'
                           : showResult && isCorrect
-                            ? 'bg-green-600/50 border-2 border-green-400'
+                            ? 'bg-green-500/20 border-2 border-green-500/50'
                             : showResult && isSelected && !isCorrect
-                              ? 'bg-red-600/50 border-2 border-red-400'
-                              : 'bg-gray-700/30 border-2 border-gray-600'
+                              ? 'bg-red-500/20 border-2 border-red-500/50'
+                              : 'bg-[#1A1A1D]/50 border-2 border-[#2A2A2E]'
                       } ${showExplanation ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="font-bold text-lg">{key}</span>
-                      <span className="text-gray-200">{value}</span>
+                      <span className="font-bold text-lg text-[#FF5C00]">{key}</span>
+                      <span className="text-[#ADADB0] flex-1">{value}</span>
                       {showResult && isCorrect && (
-                        <span className="ml-auto text-green-400">✓</span>
+                        <span className="ml-auto text-green-400 text-xl">✓</span>
                       )}
                       {showResult && isSelected && !isCorrect && (
-                        <span className="ml-auto text-red-400">✗</span>
+                        <span className="ml-auto text-red-400 text-xl">✗</span>
                       )}
                     </div>
                   </button>
@@ -356,10 +361,10 @@ export default function QuizScreen({ topic, onComplete, onGenerateMore }: QuizSc
 
           {/* Explanation */}
           {showExplanation && (
-            <div className={`rounded-xl p-5 mb-6 ${
+            <div className={`rounded-xl p-5 mb-6 border ${
               selectedAnswer === currentQuestion.correctAnswer
-                ? 'bg-green-900/30 border border-green-500/30'
-                : 'bg-red-900/30 border border-red-500/30'
+                ? 'bg-green-500/10 border-green-500/30'
+                : 'bg-red-500/10 border-red-500/30'
             }`}>
               <p className={`font-semibold mb-2 ${
                 selectedAnswer === currentQuestion.correctAnswer
@@ -368,7 +373,7 @@ export default function QuizScreen({ topic, onComplete, onGenerateMore }: QuizSc
               }`}>
                 {selectedAnswer === currentQuestion.correctAnswer ? 'Correct! 🎉' : 'Not quite'}
               </p>
-              <p className="text-gray-300 text-sm">{currentQuestion.explanation}</p>
+              <p className="text-[#ADADB0] text-sm leading-relaxed">{currentQuestion.explanation}</p>
             </div>
           )}
 
@@ -377,21 +382,22 @@ export default function QuizScreen({ topic, onComplete, onGenerateMore }: QuizSc
             <button
               onClick={handleSubmitAnswer}
               disabled={!selectedAnswer}
-              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600
-                       hover:from-blue-500 hover:to-cyan-500
-                       disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed
+              className="w-full bg-gradient-to-br from-[#FF5C00] to-[#FF8A4C]
+                       hover:from-[#FF6A10] hover:to-[#FF9A5C]
+                       disabled:from-[#2A2A2D] disabled:to-[#2A2A2D] disabled:cursor-not-allowed
                        text-white font-semibold py-4 px-6 rounded-xl text-lg
-                       transition-all duration-200"
+                       transition-all duration-200 shadow-lg shadow-[#FF5C00]/20
+                       disabled:shadow-none"
             >
               Submit Answer
             </button>
           ) : (
             <button
               onClick={handleNextQuestion}
-              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600
-                       hover:from-blue-500 hover:to-cyan-500
+              className="w-full bg-gradient-to-br from-[#FF5C00] to-[#FF8A4C]
+                       hover:from-[#FF6A10] hover:to-[#FF9A5C]
                        text-white font-semibold py-4 px-6 rounded-xl text-lg
-                       transition-all duration-200"
+                       transition-all duration-200 shadow-lg shadow-[#FF5C00]/20"
             >
               {currentQuestionIndex < questions.length - 1 ? 'Next Question →' : 'Finish Quiz'}
             </button>
