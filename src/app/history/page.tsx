@@ -167,14 +167,12 @@ export default function HistoryPage() {
           {items.map((item) => (
             <div
               key={item.id}
-              className="card card-hover p-4 flex items-center gap-4"
+              onClick={() => handlePlay(item)}
+              className="card card-hover p-4 flex items-center gap-4 cursor-pointer"
             >
-              <button
-                onClick={() => handlePlay(item)}
-                className="w-10 h-10 rounded-lg bg-[#FF5C00]/10 hover:bg-[#FF5C00]/20 flex items-center justify-center transition-colors cursor-pointer"
-              >
+              <div className="w-10 h-10 rounded-lg bg-[#FF5C00]/10 group-hover:bg-[#FF5C00]/20 flex items-center justify-center transition-colors">
                 <Play size={18} className="text-[#FF5C00]" />
-              </button>
+              </div>
               
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-medium text-white mb-1 truncate">
@@ -194,7 +192,10 @@ export default function HistoryPage() {
               </div>
               
               <button
-                onClick={() => setDeleteTarget(item.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteTarget(item.id);
+                }}
                 className="btn-icon w-9 h-9 text-[#6B6B70] hover:text-[#FF3B30] hover:bg-[#FF3B30]/10"
               >
                 <Trash2 size={16} />
