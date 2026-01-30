@@ -77,12 +77,13 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
 
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.8;
+      analyser.smoothingTimeConstant = 0.5;
       analyserRef.current = analyser;
 
       const source = audioContext.createMediaStreamSource(stream);
       source.connect(analyser);
 
+      isAnalyzingRef.current = true;
       updateAudioLevels();
     } catch (err) {
       console.error('Failed to start audio analysis:', err);
@@ -90,6 +91,8 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
   }, [updateAudioLevels]);
 
   const stopAudioAnalysis = useCallback(() => {
+    isAnalyzingRef.current = false;
+    
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;

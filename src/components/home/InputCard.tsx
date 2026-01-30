@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Mic, Sparkles, ChevronDown } from 'lucide-react';
 import type { AudienceLevel, OutputFormat } from '@/types';
 import { AUDIENCE_OPTIONS, OUTPUT_OPTIONS } from '@/types';
@@ -18,6 +18,8 @@ export default function InputCard({ onSubmit, isLoading = false }: InputCardProp
   const [output, setOutput] = useState<OutputFormat>('audio-pdf');
   const [showAudienceDropdown, setShowAudienceDropdown] = useState(false);
   const [showOutputDropdown, setShowOutputDropdown] = useState(false);
+  
+  const topicBeforeRecordingRef = useRef('');
   
   const {
     isRecording,
@@ -44,6 +46,7 @@ export default function InputCard({ onSubmit, isLoading = false }: InputCardProp
     if (isRecording) {
       stopRecording();
     } else {
+      topicBeforeRecordingRef.current = topic;
       await startRecording();
     }
   };
@@ -51,6 +54,7 @@ export default function InputCard({ onSubmit, isLoading = false }: InputCardProp
   const handleCancelRecording = () => {
     stopRecording();
     clearTranscript();
+    setTopic(topicBeforeRecordingRef.current);
   };
 
   const handleDoneRecording = () => {
