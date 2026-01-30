@@ -1,0 +1,29 @@
+<svg width="1200" height="240" viewBox="0 0 1200 240" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ExplainIt">
+  <title>ExplainIt</title>
+  <!-- Mark (speech bubble + dot) -->
+  <g transform="translate(24,32)">
+    <!-- Bubble -->
+    <path
+      d="M88 8C47.8 8 16 39.8 16 80C16 120.2 47.8 152 88 152H116L144 172V152H152C192.2 152 224 120.2 224 80C224 39.8 192.2 8 152 8H88Z"
+      stroke="#FFFFFF"
+      stroke-width="12"
+      stroke-linejoin="round"
+      opacity="0.92"
+    />
+    <!-- Dot -->
+    <circle cx="92" cy="84" r="18" fill="#FF5C00" />
+  </g>
+
+  <!-- Wordmark -->
+  <text
+    x="280"
+    y="160"
+    fill="#FFFFFF"
+    font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'"
+    font-size="112"
+    font-weight="600"
+    letter-spacing="10"
+  >
+    EXPLAINIT
+  </text>
+</svg>

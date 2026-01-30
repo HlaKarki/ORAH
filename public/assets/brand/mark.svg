@@ -1,0 +1,10 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ExplainIt mark">
+  <title>ExplainIt mark</title>
+  <path
+    d="M96 40C63.2 40 36 67.2 36 100C36 132.8 63.2 160 96 160H124L148 177V160H156C188.8 160 216 132.8 216 100C216 67.2 188.8 40 156 40H96Z"
+    stroke="#0A0A0B"
+    stroke-width="14"
+    stroke-linejoin="round"
+  />
+  <circle cx="100" cy="104" r="20" fill="#FF5C00" />
+</svg>
