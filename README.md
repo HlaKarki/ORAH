@@ -9,9 +9,7 @@
   Transform complex topics into simple explanations with AI-powered audio and PDF summaries.
 </p>
 
-<p align="center">
-  <img src="public/assets/hero.png" alt="ExplainIt App" width="720" />
-</p>
+
 
 ---
 
