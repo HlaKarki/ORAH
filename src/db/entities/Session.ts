@@ -6,7 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from "typeorm";
-import { User } from "./User";
+import type { User } from "./User";
 
 @Entity("sessions")
 export class Session {
@@ -19,7 +19,7 @@ export class Session {
   @Column({ type: "uuid" })
   userId!: string;
 
-  @ManyToOne(() => User, (user) => user.sessions, { onDelete: "CASCADE" })
+  @ManyToOne("User", "sessions", { onDelete: "CASCADE" })
   @JoinColumn({ name: "userId" })
   user!: User;
 

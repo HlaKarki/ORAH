@@ -6,7 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from "typeorm";
-import { User } from "./User";
+import type { User } from "./User";
 
 export type AudienceLevel = "5yo" | "highschool" | "college" | "professional" | "expert";
 
@@ -38,7 +38,7 @@ export class Explanation {
   @Column({ type: "uuid" })
   userId!: string;
 
-  @ManyToOne(() => User, (user) => user.explanations, { onDelete: "CASCADE" })
+  @ManyToOne("User", "explanations", { onDelete: "CASCADE" })
   @JoinColumn({ name: "userId" })
   user!: User;
 

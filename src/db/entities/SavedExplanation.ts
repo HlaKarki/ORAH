@@ -7,8 +7,8 @@ import {
   JoinColumn,
   Unique,
 } from "typeorm";
-import { User } from "./User";
-import { Explanation } from "./Explanation";
+import type { User } from "./User";
+import type { Explanation } from "./Explanation";
 
 @Entity("saved_explanations")
 @Unique(["userId", "explanationId"])
@@ -19,14 +19,14 @@ export class SavedExplanation {
   @Column({ type: "uuid" })
   userId!: string;
 
-  @ManyToOne(() => User, (user) => user.savedExplanations, { onDelete: "CASCADE" })
+  @ManyToOne("User", "savedExplanations", { onDelete: "CASCADE" })
   @JoinColumn({ name: "userId" })
   user!: User;
 
   @Column({ type: "uuid" })
   explanationId!: string;
 
-  @ManyToOne(() => Explanation, { onDelete: "CASCADE" })
+  @ManyToOne("Explanation", { onDelete: "CASCADE" })
   @JoinColumn({ name: "explanationId" })
   explanation!: Explanation;
 

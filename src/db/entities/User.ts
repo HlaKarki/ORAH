@@ -7,10 +7,10 @@ import {
   OneToMany,
   OneToOne,
 } from "typeorm";
-import { Session } from "./Session";
-import { Explanation } from "./Explanation";
-import { SavedExplanation } from "./SavedExplanation";
-import { UserSettings } from "./UserSettings";
+import type { Session } from "./Session";
+import type { Explanation } from "./Explanation";
+import type { SavedExplanation } from "./SavedExplanation";
+import type { UserSettings } from "./UserSettings";
 
 @Entity("users")
 export class User {
@@ -41,16 +41,16 @@ export class User {
   @UpdateDateColumn()
   updatedAt!: Date;
 
-  @OneToMany(() => Session, (session) => session.user)
+  @OneToMany("Session", "user")
   sessions!: Session[];
 
-  @OneToMany(() => Explanation, (explanation) => explanation.user)
+  @OneToMany("Explanation", "user")
   explanations!: Explanation[];
 
-  @OneToMany(() => SavedExplanation, (saved) => saved.user)
+  @OneToMany("SavedExplanation", "user")
   savedExplanations!: SavedExplanation[];
 
-  @OneToOne(() => UserSettings, (settings) => settings.user)
+  @OneToOne("UserSettings", "user")
   settings!: UserSettings;
 
   get initials(): string {

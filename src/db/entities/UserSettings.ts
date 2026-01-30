@@ -5,7 +5,7 @@ import {
   OneToOne,
   JoinColumn,
 } from "typeorm";
-import { User } from "./User";
+import type { User } from "./User";
 
 export type ThemeType = "dark" | "light" | "system";
 
@@ -17,7 +17,7 @@ export class UserSettings {
   @Column({ type: "uuid", unique: true })
   userId!: string;
 
-  @OneToOne(() => User, (user) => user.settings, { onDelete: "CASCADE" })
+  @OneToOne("User", "settings", { onDelete: "CASCADE" })
   @JoinColumn({ name: "userId" })
   user!: User;
 
