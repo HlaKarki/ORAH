@@ -1,0 +1,113 @@
+---
+alwaysApply: true
+---
+
+
+
+### 1. THE WIREFRAME (Single Page Application)
+
+Keep the UI boring. Boring works.
+
+```text
++---------------------------------------------------------------+
+|  [Header] ExplainIt. (Simple logo/text, top left)             |
++---------------------------------------------------------------+
+|                                                               |
+|  [ INPUT SECTION - TOP HALF ]                                 |
+|                                                               |
+|  [ Label ] What are we learning today?                        |
+|  +---------------------------------------------------------+  |
+|  | (Text Area - Auto focus)                                |  |
+|  | e.g. "What is a Moat?" or paste a Wikipedia snippet...  |  |
+|  +---------------------------------------------------------+  |
+|                                                               |
+|  [ Dropdown ] Audience: [ 5-Year Old (Default) | v ]          |
+|                                                               |
+|  [ BUTTON: EXPLAIN IT ] (Full width, big, distinct color)     |
+|                                                               |
++---------------------------------------------------------------+
+|  [ LOADING STATE ] (Hidden by default)                        |
+|  "Crunching data..." (Spinner)                                |
++---------------------------------------------------------------+
+|  [ OUTPUT SECTION - BOTTOM HALF ] (Hidden until generated)    |
+|                                                               |
+|  [ Audio Player Controls ]                                    |
+|  [ Play/Pause ] [ Progress Bar ] [ 1.0x ]                     |
+|                                                               |
+|  [ PDF PREVIEW CARD ] (HTML representation of the PDF)        |
+|  +-------------------------------------------+                |
+|  | TITLE: The Economic Moat                  |                |
+|  |                                           |                |
+|  | SUMMARY: Imagine a castle...              |                |
+|  |                                           |                |
+|  | KEY POINTS:                               |                |
+|  | * Network Effect                          |                |
+|  | * Switching Costs                         |                |
+|  +-------------------------------------------+                |
+|                                                               |
+|  [ BUTTON: DOWNLOAD PDF ] (Floating or sticky at bottom)      |
+|                                                               |
++---------------------------------------------------------------+
+```
+
+---
+
+### 2. PRODUCT REQUIREMENTS DOCUMENT (PRD)
+
+**Project:** ExplainIt MVP
+**Timeline:** 5 Hours
+**Team:** 3 Devs
+**Goal:** Functional prototype. No bells and whistles.
+
+#### A. Architecture & Stack
+*   **Framework:** Next.js (App Router). Do not use a separate backend. Use API Routes.
+*   **Styling:** Tailwind CSS. Don't write custom CSS. Use utility classes.
+*   **LLM:** OpenAI (`gpt-4o-mini` or `gpt-3.5-turbo` for speed/cost).
+*   **TTS (Audio):** Use the Web Speech API (`window.speechSynthesis`) initially. It's free, zero-latency, and runs in the browser. Only integrate an API (OpenAI Audio/ElevenLabs) if you have time at the end.
+*   **PDF:** `jspdf` or `react-pdf`. Render the JSON data directly to a layout.
+
+#### B. Data Contract (The JSON Schema)
+This is the most important part. Your prompt must force the LLM to return valid JSON. If the JSON breaks, your app breaks.
+
+**Interface:**
+```typescript
+interface ExplanationResponse {
+  title: string;
+  script_for_audio: string; // The text the TTS will read
+  one_page_content: {
+    summary_1_sentence: string;
+    analogy: string;
+    key_points: string[]; // Limit to 3-5
+    key_terms: string[];  // Limit to 3
+    why_it_matters: string;
+    competitors?: string[]; // Optional
+  }
+}
+```
+
+#### C. Functional Specifications
+
+**1. Input (The Frontend)**
+*   Single text area. Max char limit: 2000 (don't let them paste a novel, it'll timeout).
+*   "Generate" button triggers a `POST` request to `/api/generate`.
+*   **Constraint:** Disable the button while loading. Show a spinner.
+
+**2. Processing (The API Route)**
+*   Receive text.
+*   Construct Prompt:
+    *   *System:* "You are an expert tutor. Output ONLY valid JSON based on this schema..."
+    *   *User:* [User Input]
+*   Parse JSON response.
+*   Return JSON to frontend.
+
+**3. Output (The Display)**
+*   **Audio:** On valid response, immediately load `script_for_audio` into the browser's TTS engine.
+    *   *Note:* Browsers require user interaction to play audio. You might need a "Play Explanation" button if auto-play is blocked.
+*   **PDF Preview:** Render the JSON data into a clean HTML div.
+*   **PDF Download:** Take the data from the state and generate the PDF file client-side.
+
+#### D. The "Don't Do It" List (Scope Cuts)
+*   **No User Accounts:** Local storage or nothing.
+*   **No Database:** If they refresh, the data is gone. That's fine.
+*   **No "Tone" Selector (initially):** Hardcode it to "Explain like I'm 5". Add the dropdown only if the core loop works.
+*   **No Stage 2:** Forget the feedback loop. You won't have time.
