@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { Mic, Sparkles, ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Mic, MicOff, Sparkles, ChevronDown } from 'lucide-react';
 import type { AudienceLevel, OutputFormat } from '@/types';
 import { AUDIENCE_OPTIONS, OUTPUT_OPTIONS } from '@/types';
+import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 
 interface InputCardProps {
   onSubmit: (topic: string, audience: AudienceLevel, output: OutputFormat) => void;
@@ -16,6 +17,33 @@ export default function InputCard({ onSubmit, isLoading = false }: InputCardProp
   const [output, setOutput] = useState<OutputFormat>('audio-pdf');
   const [showAudienceDropdown, setShowAudienceDropdown] = useState(false);
   const [showOutputDropdown, setShowOutputDropdown] = useState(false);
+  
+  const {
+    isRecording,
+    transcript,
+    error: recordingError,
+    startRecording,
+    stopRecording,
+    clearTranscript,
+  } = useVoiceRecording();
+
+  useEffect(() => {
+    if (transcript) {
+      setTopic((prev) => {
+        const newText = prev ? `${prev} ${transcript}` : transcript;
+        return newText.slice(0, 2000);
+      });
+      clearTranscript();
+    }
+  }, [transcript, clearTranscript]);
+
+  const handleMicClick = async () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      await startRecording();
+    }
+  };
 
   const handleSubmit = () => {
     if (topic.trim() && !isLoading) {
@@ -29,17 +57,32 @@ export default function InputCard({ onSubmit, isLoading = false }: InputCardProp
   return (
     <div className="card p-6 space-y-5">
       <div className="space-y-3">
-        <textarea
-          value={topic}
-          onChange={(e) => setTopic(e.target.value.slice(0, 2000))}
-          placeholder="Type or paste anything here...
-
-e.g. &quot;What is quantum computing?&quot; or paste a Wikipedia article"
-          className="w-full h-36 p-4 bg-[#0C0C0E] border border-[#1F1F22] rounded-xl text-white placeholder-[#4A4A4F] text-[15px] leading-relaxed resize-none focus:outline-none focus:border-[#FF5C00] transition-colors"
-          disabled={isLoading}
-        />
-        <div className="text-right text-xs text-[#6B6B70]">
-          {topic.length}/2000
+        <div className="relative">
+          <textarea
+            value={topic}
+            onChange={(e) => setTopic(e.target.value.slice(0, 2000))}
+            placeholder={isRecording ? "Listening... speak now" : "Type or paste anything here...\n\ne.g. \"What is quantum computing?\" or paste a Wikipedia article"}
+            className={`w-full h-36 p-4 bg-[#0C0C0E] border rounded-xl text-white placeholder-[#4A4A4F] text-[15px] leading-relaxed resize-none focus:outline-none transition-colors ${
+              isRecording 
+                ? 'border-red-500 focus:border-red-500' 
+                : 'border-[#1F1F22] focus:border-[#FF5C00]'
+            }`}
+            disabled={isLoading}
+          />
+          {isRecording && (
+            <div className="absolute top-3 right-3 flex items-center gap-2">
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              <span className="text-xs text-red-400">Recording</span>
+            </div>
+          )}
+        </div>
+        <div className="flex justify-between text-xs">
+          {recordingError ? (
+            <span className="text-red-400">{recordingError}</span>
+          ) : (
+            <span />
+          )}
+          <span className="text-[#6B6B70]">{topic.length}/2000</span>
         </div>
       </div>
 
@@ -134,11 +177,12 @@ e.g. &quot;What is quantum computing?&quot; or paste a Wikipedia article"
         <div className="flex-1" />
 
         <button
-          className="btn-icon"
+          onClick={handleMicClick}
+          className={`btn-icon ${isRecording ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse' : ''}`}
           disabled={isLoading}
-          title="Voice input"
+          title={isRecording ? 'Stop recording' : 'Voice input'}
         >
-          <Mic size={20} />
+          {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
         </button>
 
         <button
