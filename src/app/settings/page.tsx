@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Volume2, Palette, Play, Database, Info, ChevronRight, Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Volume2, Palette, Play, Database, Info, ChevronRight, Trash2, LogIn } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { getAvailableVoices, SPEED_OPTIONS } from '@/services/settings';
 import { clearHistory } from '@/services/history';
 import DeleteDialog from '@/components/shared/DeleteDialog';
@@ -50,7 +52,9 @@ function Toggle({ checked, onChange }: ToggleProps) {
 }
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { settings, updateSettings, addToast } = useApp();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [voices, setVoices] = useState<{ id: string; name: string }[]>([]);
   const [showClearDialog, setShowClearDialog] = useState(false);
 
@@ -77,6 +81,38 @@ export default function SettingsPage() {
       setShowClearDialog(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="p-6 md:p-12 max-w-4xl mx-auto">
+        <div className="flex items-center justify-center py-16">
+          <div className="animate-spin h-8 w-8 border-2 border-[#FF5C00] border-t-transparent rounded-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="p-6 md:p-12 max-w-4xl mx-auto">
+        <div className="text-center py-16">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#1A1A1D] flex items-center justify-center">
+            <LogIn size={32} className="text-[#6B6B70]" />
+          </div>
+          <h3 className="text-lg font-semibold text-white mb-2">Sign in required</h3>
+          <p className="text-[#6B6B70] mb-6">
+            Please sign in to access settings
+          </p>
+          <button
+            onClick={() => router.push('/auth')}
+            className="btn btn-primary"
+          >
+            Sign In
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 md:p-12 max-w-4xl mx-auto">

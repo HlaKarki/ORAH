@@ -9,22 +9,30 @@ export class APIError extends Error {
   }
 }
 
-export async function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-export async function simulateAPICall<T>(
-  operation: () => T | Promise<T>,
-  delayMs = 1000,
-  failureRate = 0
+export async function apiRequest<T>(
+  url: string,
+  options: RequestInit = {}
 ): Promise<T> {
-  await delay(delayMs);
-  
-  if (Math.random() < failureRate) {
-    throw new APIError('Network error. Please try again.', 500);
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+    credentials: 'include',
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new APIError(
+      data.error || 'Request failed',
+      response.status,
+      data.details
+    );
   }
-  
-  return operation();
+
+  return data as T;
 }
 
 export function generateId(): string {

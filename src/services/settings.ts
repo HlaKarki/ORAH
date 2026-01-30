@@ -1,41 +1,42 @@
 import type { AppSettings } from '@/types';
 import { DEFAULT_SETTINGS } from '@/types';
-import { getStorageItem, setStorageItem, simulateAPICall } from './api';
+import { apiRequest } from './api';
 
-const SETTINGS_KEY = 'explainit_settings';
+interface SettingsResponse {
+  settings: AppSettings;
+}
 
 export async function getSettings(): Promise<AppSettings> {
-  return simulateAPICall(
-    () => {
-      return getStorageItem<AppSettings>(SETTINGS_KEY, DEFAULT_SETTINGS);
-    },
-    100,
-    0
-  );
+  try {
+    const response = await apiRequest<SettingsResponse>('/api/settings');
+    return response.settings;
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
 }
 
 export async function updateSettings(settings: Partial<AppSettings>): Promise<AppSettings> {
-  return simulateAPICall(
-    () => {
-      const current = getStorageItem<AppSettings>(SETTINGS_KEY, DEFAULT_SETTINGS);
-      const updated = { ...current, ...settings };
-      setStorageItem(SETTINGS_KEY, updated);
-      return updated;
-    },
-    100,
-    0
-  );
+  try {
+    const response = await apiRequest<{ success: boolean; settings: AppSettings }>('/api/settings', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    });
+    return response.settings;
+  } catch {
+    const current = await getSettings();
+    return { ...current, ...settings };
+  }
 }
 
 export async function resetSettings(): Promise<AppSettings> {
-  return simulateAPICall(
-    () => {
-      setStorageItem(SETTINGS_KEY, DEFAULT_SETTINGS);
-      return DEFAULT_SETTINGS;
-    },
-    100,
-    0
-  );
+  try {
+    const response = await apiRequest<{ success: boolean; settings: AppSettings }>('/api/settings', {
+      method: 'DELETE',
+    });
+    return response.settings;
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
 }
 
 export function getAvailableVoices(): { id: string; name: string }[] {

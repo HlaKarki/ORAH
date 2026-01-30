@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Play, Clock, Trash2, Calendar, Mic } from 'lucide-react';
+import { Search, Play, Clock, Trash2, Calendar, Mic, LogIn } from 'lucide-react';
 import type { ExplanationResponse, HistoryFilter } from '@/types';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { getHistory, deleteFromHistory, clearHistory, searchHistory } from '@/services/history';
 import DeleteDialog from '@/components/shared/DeleteDialog';
 
@@ -20,6 +21,7 @@ const filterTabs: { value: FilterTab; label: string }[] = [
 export default function HistoryPage() {
   const router = useRouter();
   const { addToast } = useApp();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [items, setItems] = useState<ExplanationResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,31 +29,44 @@ export default function HistoryPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const loadHistory = useCallback(async () => {
+    if (!isAuthenticated) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     try {
       const data = searchQuery 
         ? await searchHistory(searchQuery)
         : await getHistory({ type: activeFilter });
       setItems(data);
+    } catch (error) {
+      console.error('Failed to load history:', error);
+      addToast('error', 'Failed to load history');
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, activeFilter]);
+  }, [searchQuery, activeFilter, isAuthenticated, addToast]);
 
   useEffect(() => {
-    void loadHistory();
-  }, [loadHistory]);
+    if (!authLoading) {
+      void loadHistory();
+    }
+  }, [loadHistory, authLoading]);
 
   useEffect(() => {
+    if (!isAuthenticated || authLoading) return;
+    
     const debounce = setTimeout(() => {
       if (searchQuery) {
-        void searchHistory(searchQuery).then(setItems);
+        void searchHistory(searchQuery).then(setItems).catch(console.error);
       } else {
         void loadHistory();
       }
     }, 300);
     return () => clearTimeout(debounce);
-  }, [searchQuery, loadHistory]);
+  }, [searchQuery, loadHistory, isAuthenticated, authLoading]);
 
   const handlePlay = (item: ExplanationResponse) => {
     router.push(`/results/${item.id}`);
@@ -91,6 +106,38 @@ export default function HistoryPage() {
       minute: '2-digit',
     });
   };
+
+  if (authLoading) {
+    return (
+      <div className="p-6 md:p-12 max-w-4xl mx-auto">
+        <div className="flex items-center justify-center py-16">
+          <div className="animate-spin h-8 w-8 border-2 border-[#FF5C00] border-t-transparent rounded-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="p-6 md:p-12 max-w-4xl mx-auto">
+        <div className="text-center py-16">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#1A1A1D] flex items-center justify-center">
+            <LogIn size={32} className="text-[#6B6B70]" />
+          </div>
+          <h3 className="text-lg font-semibold text-white mb-2">Sign in required</h3>
+          <p className="text-[#6B6B70] mb-6">
+            Please sign in to view your history
+          </p>
+          <button
+            onClick={() => router.push('/auth')}
+            className="btn btn-primary"
+          >
+            Sign In
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 md:p-12 max-w-4xl mx-auto">

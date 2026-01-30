@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { getExplanationById } from '@/services/history';
 import { toggleSaved } from '@/services/saved';
 import type { ExplanationResponse } from '@/types';
@@ -12,7 +13,7 @@ import SummaryView from '@/components/results/SummaryView';
 import TranscriptView from '@/components/results/TranscriptView';
 import KeyTermsCard from '@/components/results/KeyTermsCard';
 import ShareModal from '@/components/shared/ShareModal';
-import { useRef } from 'react';
+import { LogIn } from 'lucide-react';
 
 type ViewTab = 'summary' | 'transcript';
 
@@ -20,6 +21,7 @@ export default function ResultsPage() {
   const params = useParams();
   const router = useRouter();
   const { addToast } = useApp();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [explanation, setExplanation] = useState<ExplanationResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ViewTab>('summary');
@@ -31,15 +33,27 @@ export default function ResultsPage() {
   const id = params.id as string;
 
   useEffect(() => {
-    if (id) {
-      void getExplanationById(id).then((data) => {
-        if (data) {
-          setExplanation(data);
-        }
-        setLoading(false);
-      });
+    if (authLoading) return;
+    
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
     }
-  }, [id]);
+
+    if (id) {
+      void getExplanationById(id)
+        .then((data) => {
+          if (data) {
+            setExplanation(data);
+          }
+        })
+        .catch((error) => {
+          console.error('Failed to load explanation:', error);
+          addToast('error', 'Failed to load explanation');
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [id, isAuthenticated, authLoading, addToast]);
 
   const handleBack = () => {
     router.push('/');
@@ -52,7 +66,7 @@ export default function ResultsPage() {
   const handleToggleSave = async () => {
     if (!explanation) return;
     try {
-      const newSavedState = await toggleSaved(explanation);
+      const newSavedState = await toggleSaved(explanation.id);
       setExplanation({ ...explanation, isSaved: newSavedState });
       addToast('success', newSavedState ? 'Saved to collection' : 'Removed from saved');
     } catch {
@@ -76,7 +90,7 @@ export default function ResultsPage() {
     }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="p-6 md:p-12 max-w-6xl mx-auto">
         <div className="animate-pulse space-y-6">
@@ -89,6 +103,28 @@ export default function ResultsPage() {
           <div className="card p-6">
             <div className="h-40 bg-[#1A1A1D] rounded" />
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="p-6 md:p-12 max-w-6xl mx-auto">
+        <div className="text-center py-16">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#1A1A1D] flex items-center justify-center">
+            <LogIn size={32} className="text-[#6B6B70]" />
+          </div>
+          <h3 className="text-lg font-semibold text-white mb-2">Sign in required</h3>
+          <p className="text-[#6B6B70] mb-6">
+            Please sign in to view this explanation
+          </p>
+          <button
+            onClick={() => router.push('/auth')}
+            className="btn btn-primary"
+          >
+            Sign In
+          </button>
         </div>
       </div>
     );

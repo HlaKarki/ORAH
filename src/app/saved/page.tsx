@@ -2,22 +2,36 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Clock, Bookmark, BookmarkX } from 'lucide-react';
+import { Play, Clock, Bookmark, BookmarkX, LogIn } from 'lucide-react';
 import type { ExplanationResponse } from '@/types';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { getSaved, unsaveExplanation } from '@/services/saved';
 
 export default function SavedPage() {
   const router = useRouter();
   const { addToast } = useApp();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [items, setItems] = useState<ExplanationResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
+    
+    if (!isAuthenticated) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+
     void getSaved()
       .then(setItems)
+      .catch((error) => {
+        console.error('Failed to load saved items:', error);
+        addToast('error', 'Failed to load saved items');
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [isAuthenticated, authLoading, addToast]);
 
   const handlePlay = (item: ExplanationResponse) => {
     router.push(`/results/${item.id}`);
@@ -45,6 +59,38 @@ export default function SavedPage() {
       day: 'numeric',
     });
   };
+
+  if (authLoading) {
+    return (
+      <div className="p-6 md:p-12 max-w-4xl mx-auto">
+        <div className="flex items-center justify-center py-16">
+          <div className="animate-spin h-8 w-8 border-2 border-[#FF5C00] border-t-transparent rounded-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="p-6 md:p-12 max-w-4xl mx-auto">
+        <div className="text-center py-16">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#1A1A1D] flex items-center justify-center">
+            <LogIn size={32} className="text-[#6B6B70]" />
+          </div>
+          <h3 className="text-lg font-semibold text-white mb-2">Sign in required</h3>
+          <p className="text-[#6B6B70] mb-6">
+            Please sign in to view your saved explanations
+          </p>
+          <button
+            onClick={() => router.push('/auth')}
+            className="btn btn-primary"
+          >
+            Sign In
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 md:p-12 max-w-4xl mx-auto">

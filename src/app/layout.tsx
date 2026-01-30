@@ -2,6 +2,7 @@ import '@/styles/globals.css';
 import { type Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { AppProvider } from '@/context/AppContext';
+import { AuthProvider } from '@/context/AuthContext';
 import { AppLayout } from '@/components/layout';
 
 export const metadata: Metadata = {
@@ -21,9 +22,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="font-sans antialiased">
-        <AppProvider>
-          <AppLayout>{children}</AppLayout>
-        </AppProvider>
+        <AuthProvider>
+          <AppProvider>
+            <AppLayout>{children}</AppLayout>
+          </AppProvider>
+        </AuthProvider>
       </body>
     </html>
   );

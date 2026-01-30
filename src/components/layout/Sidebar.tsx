@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Home, History, Bookmark, Settings, Sparkles, ChevronRight, User, LogOut } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
@@ -12,18 +13,11 @@ const navItems = [
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
-const mockUser = {
-  firstName: 'John',
-  lastName: 'Doe',
-  email: 'john@example.com',
-  initials: 'JD',
-};
-
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,9 +31,9 @@ export default function Sidebar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
+  const handleLogout = async () => {
     setIsProfileOpen(false);
+    await logout();
     router.push('/auth');
   };
 
@@ -95,20 +89,24 @@ export default function Sidebar() {
           </div>
 
           <div className="relative" ref={dropdownRef}>
-            {isLoggedIn ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center p-3">
+                <div className="animate-spin h-5 w-5 border-2 border-[#FF5C00] border-t-transparent rounded-full" />
+              </div>
+            ) : isAuthenticated && user ? (
               <>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                   className="flex items-center gap-3 p-2 w-full rounded-lg hover:bg-[#1A1A1D] transition-colors"
                 >
                   <div className="w-9 h-9 rounded-full bg-[#1A1A1D] flex items-center justify-center text-sm font-medium text-white">
-                    {mockUser.initials}
+                    {user.initials}
                   </div>
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium text-white truncate">
-                      {mockUser.firstName} {mockUser.lastName}
+                      {user.fullName}
                     </p>
-                    <p className="text-xs text-[#6B6B70] truncate">{mockUser.email}</p>
+                    <p className="text-xs text-[#6B6B70] truncate">{user.email}</p>
                   </div>
                   <ChevronRight 
                     size={16} 
@@ -120,7 +118,7 @@ export default function Sidebar() {
                   <div className="absolute bottom-full left-0 right-0 mb-2 bg-[#111113] border border-[#1F1F22] rounded-xl shadow-lg overflow-hidden">
                     <div className="px-3 py-2.5 border-b border-[#1F1F22]">
                       <p className="text-xs text-[#6B6B70]">Signed in as</p>
-                      <p className="text-sm text-white font-medium truncate">{mockUser.email}</p>
+                      <p className="text-sm text-white font-medium truncate">{user.email}</p>
                     </div>
                     
                     <button

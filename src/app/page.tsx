@@ -6,7 +6,6 @@ import { InputCard, RecentExplanations } from '@/components/home';
 import ProcessingOverlay from '@/components/shared/ProcessingOverlay';
 import ErrorOverlay from '@/components/shared/ErrorOverlay';
 import { generateExplanation } from '@/services/explain';
-import { addToHistory } from '@/services/history';
 import type { AudienceLevel, OutputFormat, ExplanationResponse, RecordingData } from '@/types';
 
 export default function HomePage() {
@@ -24,7 +23,6 @@ export default function HomePage() {
     
     try {
       const explanation = await generateExplanation(topic, audience, recordingData);
-      await addToHistory(explanation);
       addToast('success', 'Explanation generated successfully!');
       router.push(`/results/${explanation.id}`);
     } catch (error) {

@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
+import { APIError } from '@/services/api';
 
 type AuthMode = 'login' | 'register';
 
@@ -16,6 +18,7 @@ interface FormData {
 
 export default function AuthPage() {
   const router = useRouter();
+  const { login, register, isAuthenticated, isLoading: authLoading } = useAuth();
   const [mode, setMode] = useState<AuthMode>('login');
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
@@ -26,13 +29,22 @@ export default function AuthPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [errors, setErrors] = useState<Partial<FormData & { general: string }>>({});
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push('/');
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name as keyof FormData]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+    if (errors.general) {
+      setErrors(prev => ({ ...prev, general: '' }));
     }
   };
 
@@ -73,19 +85,43 @@ export default function AuthPage() {
     if (!validateForm()) return;
 
     setIsLoading(true);
+    setErrors({});
     
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    console.log(mode === 'login' ? 'Login data:' : 'Register data:', formData);
-    
-    setIsLoading(false);
-    router.push('/');
+    try {
+      if (mode === 'login') {
+        await login(formData.email, formData.password);
+      } else {
+        await register(
+          formData.firstName,
+          formData.lastName,
+          formData.email,
+          formData.password
+        );
+      }
+      router.push('/');
+    } catch (error) {
+      if (error instanceof APIError) {
+        setErrors({ general: error.message });
+      } else {
+        setErrors({ general: 'An unexpected error occurred. Please try again.' });
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const switchMode = (newMode: AuthMode) => {
     setMode(newMode);
     setErrors({});
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#08080A]">
+        <div className="animate-spin h-8 w-8 border-2 border-[#FF5C00] border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   const inputStyles = "w-full px-4 py-3.5 bg-[#0C0C0E] border border-[#1F1F22] rounded-[10px] text-white text-[15px] placeholder-[#4A4A4F] focus:outline-none focus:border-[#FF5C00] transition-colors";
   const inputErrorStyles = "border-[#FF3B30]";
@@ -139,6 +175,12 @@ export default function AuthPage() {
               Sign Up
             </button>
           </div>
+
+          {errors.general && (
+            <div className="mb-4 p-3 bg-[#FF3B30]/10 border border-[#FF3B30]/20 rounded-lg">
+              <p className="text-sm text-[#FF3B30]">{errors.general}</p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'register' && (
@@ -247,21 +289,6 @@ export default function AuthPage() {
                 {errors.confirmPassword && (
                   <p className="mt-1.5 text-xs text-[#FF3B30]">{errors.confirmPassword}</p>
                 )}
-              </div>
-            )}
-
-            {mode === 'login' && (
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 rounded border-[#2A2A2D] bg-[#0C0C0E] accent-[#FF5C00]"
-                  />
-                  <span className="text-sm text-[#8B8B90]">Remember me</span>
-                </label>
-                <button type="button" className="text-sm text-[#FF5C00] hover:text-[#FF7A00] transition-colors">
-                  Forgot password?
-                </button>
               </div>
             )}
 

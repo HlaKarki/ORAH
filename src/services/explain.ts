@@ -1,5 +1,5 @@
 import type { ExplanationResponse, AudienceLevel, RecordingData } from '@/types';
-import { simulateAPICall, generateId } from './api';
+import { apiRequest, APIError } from './api';
 
 const MOCK_EXPLANATIONS: Record<string, Partial<ExplanationResponse>> = {
   default: {
@@ -83,63 +83,77 @@ function getMockExplanation(topic: string): Partial<ExplanationResponse> {
   };
 }
 
+async function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+interface AddHistoryResponse {
+  success: boolean;
+  explanation: ExplanationResponse;
+}
+
 export async function generateExplanation(
   topic: string,
   audience: AudienceLevel = '5yo',
   recordingData?: RecordingData
 ): Promise<ExplanationResponse> {
-  return simulateAPICall(
-    () => {
-      const mockData = getMockExplanation(topic);
-      
-      const hasRecording = recordingData?.audioUrl && recordingData.segments.length > 0;
-      
-      const explanation: ExplanationResponse = {
-        id: generateId(),
-        title: mockData.title ?? topic,
-        script_for_audio: hasRecording ? recordingData.segments.map(s => s.text).join(' ') : (mockData.script_for_audio ?? ''),
-        audioDuration: hasRecording ? recordingData.recordingDuration : (mockData.audioDuration ?? 120),
-        createdAt: new Date().toISOString(),
-        audience,
-        isSaved: false,
-        one_page_content: mockData.one_page_content ?? {
-          summary_1_sentence: '',
-          analogy: '',
-          key_points: [],
-          key_terms: [],
-          why_it_matters: '',
-          related_topics: [],
-        },
-        recordingData: hasRecording ? recordingData : undefined,
-      };
-      
-      return explanation;
+  await delay(2500);
+  
+  const mockData = getMockExplanation(topic);
+  const hasRecording = recordingData?.audioUrl && recordingData.segments.length > 0;
+  
+  const explanationData = {
+    title: mockData.title ?? topic,
+    script_for_audio: hasRecording ? recordingData.segments.map(s => s.text).join(' ') : (mockData.script_for_audio ?? ''),
+    audioDuration: hasRecording ? recordingData.recordingDuration : (mockData.audioDuration ?? 120),
+    audience,
+    one_page_content: mockData.one_page_content ?? {
+      summary_1_sentence: '',
+      analogy: '',
+      key_points: [],
+      key_terms: [],
+      why_it_matters: '',
+      related_topics: [],
     },
-    2500,
-    0
-  );
+    recordingData: hasRecording ? recordingData : undefined,
+  };
+  
+  try {
+    const response = await apiRequest<AddHistoryResponse>('/api/history', {
+      method: 'POST',
+      body: JSON.stringify(explanationData),
+    });
+    return response.explanation;
+  } catch (error) {
+    if (error instanceof APIError && error.statusCode === 401) {
+      const localId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      return {
+        id: localId,
+        ...explanationData,
+        createdAt: new Date().toISOString(),
+        isSaved: false,
+      };
+    }
+    throw error;
+  }
 }
 
 export async function regenerateExplanation(
   id: string,
   audience: AudienceLevel
 ): Promise<ExplanationResponse> {
-  return simulateAPICall(
-    () => {
-      const mockData = MOCK_EXPLANATIONS.default!;
-      
-      return {
-        id,
-        title: mockData.title ?? 'Regenerated Explanation',
-        script_for_audio: mockData.script_for_audio ?? '',
-        audioDuration: mockData.audioDuration ?? 120,
-        createdAt: new Date().toISOString(),
-        audience,
-        isSaved: false,
-        one_page_content: mockData.one_page_content!,
-      };
-    },
-    1500,
-    0
-  );
+  await delay(1500);
+  
+  const mockData = MOCK_EXPLANATIONS.default!;
+  
+  return {
+    id,
+    title: mockData.title ?? 'Regenerated Explanation',
+    script_for_audio: mockData.script_for_audio ?? '',
+    audioDuration: mockData.audioDuration ?? 120,
+    createdAt: new Date().toISOString(),
+    audience,
+    isSaved: false,
+    one_page_content: mockData.one_page_content!,
+  };
 }

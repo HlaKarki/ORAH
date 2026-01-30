@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Home, History, Bookmark, User, LogOut, X } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 const tabItems = [
   { href: '/', label: 'Home', icon: Home },
@@ -11,22 +12,15 @@ const tabItems = [
   { href: '/saved', label: 'Saved', icon: Bookmark },
 ];
 
-const mockUser = {
-  firstName: 'John',
-  lastName: 'Doe',
-  email: 'john@example.com',
-  initials: 'JD',
-};
-
 export default function MobileTabBar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
+  const handleLogout = async () => {
     setIsProfileOpen(false);
+    await logout();
     router.push('/auth');
   };
 
@@ -49,17 +43,17 @@ export default function MobileTabBar() {
               </button>
             </div>
 
-            {isLoggedIn ? (
+            {isAuthenticated && user ? (
               <>
                 <div className="flex items-center gap-3 p-3 mb-4 bg-[#0C0C0E] rounded-xl">
                   <div className="w-12 h-12 rounded-full bg-[#1A1A1D] flex items-center justify-center text-base font-medium text-white">
-                    {mockUser.initials}
+                    {user.initials}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-base font-medium text-white truncate">
-                      {mockUser.firstName} {mockUser.lastName}
+                      {user.fullName}
                     </p>
-                    <p className="text-sm text-[#6B6B70] truncate">{mockUser.email}</p>
+                    <p className="text-sm text-[#6B6B70] truncate">{user.email}</p>
                   </div>
                 </div>
 
@@ -115,18 +109,20 @@ export default function MobileTabBar() {
           })}
 
           <button
-            onClick={() => isLoggedIn ? setIsProfileOpen(true) : router.push('/auth')}
+            onClick={() => isAuthenticated ? setIsProfileOpen(true) : router.push('/auth')}
             className="flex flex-col items-center gap-1 px-4"
           >
-            {isLoggedIn ? (
+            {isLoading ? (
+              <div className="w-[22px] h-[22px] rounded-full border-2 border-[#FF5C00] border-t-transparent animate-spin" />
+            ) : isAuthenticated && user ? (
               <div className="w-[22px] h-[22px] rounded-full bg-[#1A1A1D] flex items-center justify-center text-[9px] font-medium text-white">
-                {mockUser.initials}
+                {user.initials}
               </div>
             ) : (
               <User size={22} className="text-[#6B6B70]" />
             )}
             <span className="text-[11px] font-medium text-[#6B6B70]">
-              {isLoggedIn ? 'Account' : 'Sign In'}
+              {isAuthenticated ? 'Account' : 'Sign In'}
             </span>
           </button>
         </div>

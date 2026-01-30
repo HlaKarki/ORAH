@@ -32,7 +32,7 @@ export default function ResultsView({ explanation, onBack }: ResultsViewProps) {
 
   const handleToggleSave = async () => {
     try {
-      const newSavedState = await toggleSaved(explanation);
+      const newSavedState = await toggleSaved(explanation.id);
       toggleCurrentSaved(newSavedState);
       addToast('success', newSavedState ? 'Saved to collection' : 'Removed from saved');
     } catch {
