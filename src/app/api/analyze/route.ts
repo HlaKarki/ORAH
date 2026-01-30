@@ -1,7 +1,9 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import OpenAI from 'openai'
 import { NextRequest, NextResponse } from 'next/server'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+const openai = new OpenAI({
+  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY || '',
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,8 +12,6 @@ export async function POST(request: NextRequest) {
     if (!userExplanation) {
       return NextResponse.json({ error: 'User explanation is required' }, { status: 400 })
     }
-
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
     const prompt = `You are an expert teacher analyzing a student's explanation using the Feynman Technique.
 
@@ -57,17 +57,17 @@ Important:
 - Always provide at least 2 items in each array
 - Be specific, not generic`
 
-    const result = await model.generateContent(prompt)
-    const response = result.response
-    const text = response.text()
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: 'You are an expert teacher analyzing student explanations. Always respond with valid JSON.' },
+        { role: 'user', content: prompt }
+      ],
+      response_format: { type: 'json_object' }
+    })
 
-    // Parse JSON from response
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      throw new Error('Invalid response format')
-    }
-
-    const data = JSON.parse(jsonMatch[0])
+    const text = completion.choices[0]?.message?.content || '{}'
+    const data = JSON.parse(text)
 
     // Validate and ensure arrays have content
     const analysis = {
@@ -88,8 +88,11 @@ Important:
 
   } catch (error) {
     console.error('Analyze API error:', error)
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Error details:', message)
+    console.error('OPENAI_API_KEY present:', !!process.env.NEXT_PUBLIC_OPENAI_API_KEY)
     return NextResponse.json(
-      { error: 'Failed to analyze explanation' },
+      { error: `Failed to analyze explanation: ${message}` },
       { status: 500 }
     )
   }

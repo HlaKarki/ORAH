@@ -1,7 +1,9 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import OpenAI from 'openai'
 import { NextRequest, NextResponse } from 'next/server'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+const openai = new OpenAI({
+  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY || '',
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,8 +12,6 @@ export async function POST(request: NextRequest) {
     if (!topic) {
       return NextResponse.json({ error: 'Topic is required' }, { status: 400 })
     }
-
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
     const prompt = focusQuestion
       ? `You are a brilliant teacher using the Feynman Technique. The student is learning about "${topic}" and needs help understanding this specific aspect: "${focusQuestion}"
@@ -49,17 +49,17 @@ Respond in this exact JSON format:
   "question": "Your follow-up question here..."
 }`
 
-    const result = await model.generateContent(prompt)
-    const response = result.response
-    const text = response.text()
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: 'You are a brilliant teacher using the Feynman Technique. Always respond with valid JSON.' },
+        { role: 'user', content: prompt }
+      ],
+      response_format: { type: 'json_object' }
+    })
 
-    // Parse JSON from response
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      throw new Error('Invalid response format')
-    }
-
-    const data = JSON.parse(jsonMatch[0])
+    const text = completion.choices[0]?.message?.content || '{}'
+    const data = JSON.parse(text)
 
     // Generate audio if ElevenLabs key is available
     let audioUrl: string | undefined
@@ -102,6 +102,8 @@ Respond in this exact JSON format:
   } catch (error) {
     console.error('Teach API error:', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('OPENAI_API_KEY present:', !!process.env.NEXT_PUBLIC_OPENAI_API_KEY)
+    console.error('ELEVENLABS_API_KEY present:', !!process.env.ELEVENLABS_API_KEY)
     return NextResponse.json(
       { error: `Failed to generate teaching content: ${message}` },
       { status: 500 }
