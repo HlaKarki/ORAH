@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import type { TranscriptSegment } from '@/types';
 
 interface UseVoiceRecordingReturn {
   isRecording: boolean;
@@ -9,11 +10,13 @@ interface UseVoiceRecordingReturn {
   transcript: string;
   error: string | null;
   audioLevels: number[];
+  audioUrl: string | null;
+  segments: TranscriptSegment[];
   startRecording: () => Promise<void>;
   stopRecording: () => void;
   pauseRecording: () => void;
   resumeRecording: () => void;
-  clearTranscript: () => void;
+  clearRecording: () => void;
 }
 
 export function useVoiceRecording(): UseVoiceRecordingReturn {
@@ -23,6 +26,8 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(20).fill(4));
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [segments, setSegments] = useState<TranscriptSegment[]>([]);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -35,6 +40,11 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const isAnalyzingRef = useRef(false);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const segmentsRef = useRef<TranscriptSegment[]>([]);
+  const lastSegmentEndRef = useRef<number>(0);
 
   useEffect(() => {
     isRecordingRef.current = isRecording;
@@ -67,7 +77,7 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
     animationFrameRef.current = requestAnimationFrame(updateAudioLevels);
   }, []);
 
-  const startAudioAnalysis = useCallback(async () => {
+  const startAudioAnalysisAndRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
@@ -85,12 +95,29 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
 
       isAnalyzingRef.current = true;
       updateAudioLevels();
+
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
+      });
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.start(100);
+
+      return stream;
     } catch (err) {
       console.error('Failed to start audio analysis:', err);
+      throw err;
     }
   }, [updateAudioLevels]);
 
-  const stopAudioAnalysis = useCallback(() => {
+  const stopAudioAnalysisAndRecording = useCallback(() => {
     isAnalyzingRef.current = false;
     
     if (animationFrameRef.current) {
@@ -98,18 +125,40 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
       animationFrameRef.current = null;
     }
 
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(track => track.stop());
-      mediaStreamRef.current = null;
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
     }
 
-    if (audioContextRef.current) {
-      void audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
+    return new Promise<string | null>((resolve) => {
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.onstop = () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          if (audioBlob.size > 0) {
+            const url = URL.createObjectURL(audioBlob);
+            setAudioUrl(url);
+            resolve(url);
+          } else {
+            resolve(null);
+          }
+          mediaRecorderRef.current = null;
+        };
+      } else {
+        resolve(null);
+      }
 
-    analyserRef.current = null;
-    setAudioLevels(new Array(20).fill(4));
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => track.stop());
+        mediaStreamRef.current = null;
+      }
+
+      if (audioContextRef.current) {
+        void audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+
+      analyserRef.current = null;
+      setAudioLevels(new Array(20).fill(4));
+    });
   }, []);
 
   const startTimer = useCallback(() => {
@@ -142,9 +191,13 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
     try {
       setTranscript('');
       setDuration(0);
+      setAudioUrl(null);
+      setSegments([]);
+      segmentsRef.current = [];
+      lastSegmentEndRef.current = 0;
       shouldRestartRef.current = true;
 
-      await startAudioAnalysis();
+      await startAudioAnalysisAndRecording();
 
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
@@ -162,6 +215,7 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
 
       recognition.onresult = (event) => {
         let finalTranscript = '';
+        const currentTime = (Date.now() - startTimeRef.current) / 1000;
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
@@ -173,6 +227,17 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
         }
 
         if (finalTranscript) {
+          const trimmedText = finalTranscript.trim();
+          if (trimmedText) {
+            const newSegment: TranscriptSegment = {
+              text: trimmedText,
+              startTime: lastSegmentEndRef.current,
+              endTime: currentTime,
+            };
+            segmentsRef.current = [...segmentsRef.current, newSegment];
+            setSegments([...segmentsRef.current]);
+            lastSegmentEndRef.current = currentTime;
+          }
           setTranscript((prev) => prev + finalTranscript);
         }
       };
@@ -188,7 +253,7 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
         shouldRestartRef.current = false;
         setIsRecording(false);
         stopTimer();
-        stopAudioAnalysis();
+        void stopAudioAnalysisAndRecording();
       };
 
       recognition.onend = () => {
@@ -198,7 +263,7 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
           } catch {
             setIsRecording(false);
             stopTimer();
-            stopAudioAnalysis();
+            void stopAudioAnalysisAndRecording();
           }
         } else {
           setIsRecording(false);
@@ -210,12 +275,23 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
       recognition.start();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start recording');
-      stopAudioAnalysis();
+      void stopAudioAnalysisAndRecording();
     }
-  }, [startTimer, stopTimer, startAudioAnalysis, stopAudioAnalysis]);
+  }, [startTimer, stopTimer, startAudioAnalysisAndRecording, stopAudioAnalysisAndRecording]);
 
   const stopRecording = useCallback(() => {
     shouldRestartRef.current = false;
+    
+    const finalDuration = (Date.now() - startTimeRef.current) / 1000;
+    
+    if (segmentsRef.current.length > 0) {
+      const lastSegment = segmentsRef.current[segmentsRef.current.length - 1];
+      if (lastSegment && lastSegment.endTime < finalDuration) {
+        lastSegment.endTime = finalDuration;
+        setSegments([...segmentsRef.current]);
+      }
+    }
+    
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
@@ -226,8 +302,8 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
     setIsRecording(false);
     setIsPaused(false);
     stopTimer();
-    stopAudioAnalysis();
-  }, [stopTimer, stopAudioAnalysis]);
+    void stopAudioAnalysisAndRecording();
+  }, [stopTimer, stopAudioAnalysisAndRecording]);
 
   const pauseRecording = useCallback(() => {
     if (recognitionRef.current && isRecording) {
@@ -238,6 +314,10 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
       }
       setIsPaused(true);
       stopTimer();
+      
+      if (mediaRecorderRef.current?.state === 'recording') {
+        mediaRecorderRef.current.pause();
+      }
     }
   }, [isRecording, stopTimer]);
 
@@ -250,13 +330,24 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
       }
       setIsPaused(false);
       startTimer();
+      
+      if (mediaRecorderRef.current?.state === 'paused') {
+        mediaRecorderRef.current.resume();
+      }
     }
   }, [isPaused, startTimer]);
 
-  const clearTranscript = useCallback(() => {
+  const clearRecording = useCallback(() => {
     setTranscript('');
     setDuration(0);
-  }, []);
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+    }
+    setAudioUrl(null);
+    setSegments([]);
+    segmentsRef.current = [];
+    lastSegmentEndRef.current = 0;
+  }, [audioUrl]);
 
   useEffect(() => {
     return () => {
@@ -272,6 +363,9 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
       }
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
       }
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
@@ -289,11 +383,13 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
     transcript,
     error,
     audioLevels,
+    audioUrl,
+    segments,
     startRecording,
     stopRecording,
     pauseRecording,
     resumeRecording,
-    clearTranscript,
+    clearRecording,
   };
 }
 

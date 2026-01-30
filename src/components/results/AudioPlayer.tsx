@@ -7,6 +7,7 @@ import { useApp } from '@/context/AppContext';
 interface AudioPlayerProps {
   script: string;
   duration: number;
+  audioUrl?: string | null;
   onTimeUpdate?: (currentTime: number) => void;
   seekTime?: number;
 }
@@ -19,7 +20,7 @@ const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const WAVEFORM_BARS = 60;
 
 const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function AudioPlayer(
-  { script, duration, onTimeUpdate, seekTime },
+  { script, duration, audioUrl, onTimeUpdate, seekTime },
   ref
 ) {
   const { settings } = useApp();
@@ -27,11 +28,15 @@ const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function AudioP
   const [currentTime, setCurrentTime] = useState(0);
   const [speed, setSpeed] = useState(settings.speed);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  const [actualDuration, setActualDuration] = useState(duration);
   
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
   const pausedTimeRef = useRef<number>(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const hasRecordedAudio = Boolean(audioUrl);
 
   const waveformHeights = useMemo(() => 
     Array.from({ length: WAVEFORM_BARS }, () => Math.random() * 20 + 8), 
@@ -43,6 +48,45 @@ const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function AudioP
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  useEffect(() => {
+    if (audioUrl && !audioRef.current) {
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+
+      audio.onloadedmetadata = () => {
+        if (audio.duration && !isNaN(audio.duration)) {
+          setActualDuration(audio.duration);
+        }
+      };
+
+      audio.ontimeupdate = () => {
+        setCurrentTime(audio.currentTime);
+        onTimeUpdate?.(audio.currentTime);
+      };
+
+      audio.onended = () => {
+        setIsPlaying(false);
+        setCurrentTime(0);
+      };
+
+      audio.onerror = () => {
+        console.error('Audio playback error');
+      };
+    }
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, [audioUrl, onTimeUpdate]);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = speed;
+    }
+  }, [speed]);
 
   const stopSpeech = useCallback(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -74,7 +118,7 @@ const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function AudioP
       startTimeRef.current = Date.now() - (pausedTimeRef.current * 1000);
       intervalRef.current = setInterval(() => {
         const elapsed = (Date.now() - startTimeRef.current) / 1000;
-        const adjustedTime = Math.min(elapsed * speed, duration);
+        const adjustedTime = Math.min(elapsed * speed, actualDuration);
         setCurrentTime(adjustedTime);
         onTimeUpdate?.(adjustedTime);
       }, 100);
@@ -94,40 +138,64 @@ const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function AudioP
     
     utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
-  }, [script, speed, settings.voice, duration, onTimeUpdate, stopSpeech]);
+  }, [script, speed, settings.voice, actualDuration, onTimeUpdate, stopSpeech]);
 
   const togglePlay = useCallback(() => {
-    if (!isPlaying) {
-      setIsPlaying(true);
-      startSpeech();
+    if (hasRecordedAudio && audioRef.current) {
+      if (!isPlaying) {
+        setIsPlaying(true);
+        void audioRef.current.play();
+      } else {
+        setIsPlaying(false);
+        audioRef.current.pause();
+      }
     } else {
-      setIsPlaying(false);
-      pausedTimeRef.current = currentTime;
-      stopSpeech();
+      if (!isPlaying) {
+        setIsPlaying(true);
+        startSpeech();
+      } else {
+        setIsPlaying(false);
+        pausedTimeRef.current = currentTime;
+        stopSpeech();
+      }
     }
-  }, [isPlaying, startSpeech, stopSpeech, currentTime]);
+  }, [isPlaying, hasRecordedAudio, startSpeech, stopSpeech, currentTime]);
 
   const handleSkipBack = () => {
     const newTime = Math.max(0, currentTime - 10);
-    setCurrentTime(newTime);
-    pausedTimeRef.current = newTime;
-    onTimeUpdate?.(newTime);
     
-    if (isPlaying) {
-      stopSpeech();
-      startSpeech();
+    if (hasRecordedAudio && audioRef.current) {
+      audioRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+      onTimeUpdate?.(newTime);
+    } else {
+      setCurrentTime(newTime);
+      pausedTimeRef.current = newTime;
+      onTimeUpdate?.(newTime);
+      
+      if (isPlaying) {
+        stopSpeech();
+        startSpeech();
+      }
     }
   };
 
   const handleSkipForward = () => {
-    const newTime = Math.min(duration, currentTime + 10);
-    setCurrentTime(newTime);
-    pausedTimeRef.current = newTime;
-    onTimeUpdate?.(newTime);
+    const newTime = Math.min(actualDuration, currentTime + 10);
     
-    if (isPlaying) {
-      stopSpeech();
-      startSpeech();
+    if (hasRecordedAudio && audioRef.current) {
+      audioRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+      onTimeUpdate?.(newTime);
+    } else {
+      setCurrentTime(newTime);
+      pausedTimeRef.current = newTime;
+      onTimeUpdate?.(newTime);
+      
+      if (isPlaying) {
+        stopSpeech();
+        startSpeech();
+      }
     }
   };
 
@@ -135,15 +203,21 @@ const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function AudioP
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const clickPercent = Math.max(0, Math.min(1, clickX / rect.width));
-    const newTime = clickPercent * duration;
+    const newTime = clickPercent * actualDuration;
     
-    setCurrentTime(newTime);
-    pausedTimeRef.current = newTime;
-    onTimeUpdate?.(newTime);
-    
-    if (isPlaying) {
-      stopSpeech();
-      startSpeech();
+    if (hasRecordedAudio && audioRef.current) {
+      audioRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+      onTimeUpdate?.(newTime);
+    } else {
+      setCurrentTime(newTime);
+      pausedTimeRef.current = newTime;
+      onTimeUpdate?.(newTime);
+      
+      if (isPlaying) {
+        stopSpeech();
+        startSpeech();
+      }
     }
   };
 
@@ -151,7 +225,9 @@ const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function AudioP
     setSpeed(newSpeed);
     setShowSpeedMenu(false);
     
-    if (isPlaying) {
+    if (hasRecordedAudio && audioRef.current) {
+      audioRef.current.playbackRate = newSpeed;
+    } else if (isPlaying) {
       pausedTimeRef.current = currentTime;
       stopSpeech();
       setTimeout(() => startSpeech(), 50);
@@ -159,16 +235,23 @@ const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function AudioP
   };
 
   const seekTo = useCallback((time: number) => {
-    const newTime = Math.max(0, Math.min(duration, time));
-    setCurrentTime(newTime);
-    pausedTimeRef.current = newTime;
-    onTimeUpdate?.(newTime);
+    const newTime = Math.max(0, Math.min(actualDuration, time));
     
-    if (isPlaying) {
-      stopSpeech();
-      startSpeech();
+    if (hasRecordedAudio && audioRef.current) {
+      audioRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+      onTimeUpdate?.(newTime);
+    } else {
+      setCurrentTime(newTime);
+      pausedTimeRef.current = newTime;
+      onTimeUpdate?.(newTime);
+      
+      if (isPlaying) {
+        stopSpeech();
+        startSpeech();
+      }
     }
-  }, [duration, isPlaying, onTimeUpdate, startSpeech, stopSpeech]);
+  }, [actualDuration, hasRecordedAudio, isPlaying, onTimeUpdate, startSpeech, stopSpeech]);
 
   useImperativeHandle(ref, () => ({
     seekTo
@@ -183,14 +266,24 @@ const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function AudioP
   useEffect(() => {
     return () => {
       stopSpeech();
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
     };
   }, [stopSpeech]);
 
-  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const currentBarIndex = Math.floor((currentTime / duration) * WAVEFORM_BARS);
+  const progressPercent = actualDuration > 0 ? (currentTime / actualDuration) * 100 : 0;
+  const currentBarIndex = Math.floor((currentTime / actualDuration) * WAVEFORM_BARS);
 
   return (
     <div className="card p-4 md:p-6">
+      {hasRecordedAudio && (
+        <div className="text-xs text-[#6B6B70] mb-2 flex items-center gap-2">
+          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+          Playing recorded audio
+        </div>
+      )}
+      
       <div 
         className="flex items-end h-10 mb-2 cursor-pointer"
         onClick={handleProgressClick}
@@ -231,7 +324,7 @@ const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function AudioP
         <span className="text-sm text-[#8B8B90] min-w-[90px]">
           <span className="text-white">{formatTime(currentTime)}</span>
           <span className="mx-1">/</span>
-          <span>{formatTime(duration)}</span>
+          <span>{formatTime(actualDuration)}</span>
         </span>
         
         <div className="flex items-center gap-2">

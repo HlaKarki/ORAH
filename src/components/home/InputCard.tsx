@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Mic, Sparkles, ChevronDown } from 'lucide-react';
-import type { AudienceLevel, OutputFormat } from '@/types';
+import type { AudienceLevel, OutputFormat, RecordingData } from '@/types';
 import { AUDIENCE_OPTIONS, OUTPUT_OPTIONS } from '@/types';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 import VoiceRecordingUI, { VoiceRecordingControls } from './VoiceRecordingUI';
 
 interface InputCardProps {
-  onSubmit: (topic: string, audience: AudienceLevel, output: OutputFormat) => void;
+  onSubmit: (topic: string, audience: AudienceLevel, output: OutputFormat, recordingData?: RecordingData) => void;
   isLoading?: boolean;
 }
 
@@ -20,6 +20,7 @@ export default function InputCard({ onSubmit, isLoading = false }: InputCardProp
   const [showOutputDropdown, setShowOutputDropdown] = useState(false);
   
   const topicBeforeRecordingRef = useRef('');
+  const [pendingRecordingData, setPendingRecordingData] = useState<RecordingData | null>(null);
   
   const {
     isRecording,
@@ -27,43 +28,65 @@ export default function InputCard({ onSubmit, isLoading = false }: InputCardProp
     transcript,
     error: recordingError,
     audioLevels,
+    audioUrl,
+    segments,
     startRecording,
     stopRecording,
-    clearTranscript,
+    clearRecording,
   } = useVoiceRecording();
 
   useEffect(() => {
-    if (transcript) {
+    if (transcript && isRecording) {
       setTopic((prev) => {
         const newText = prev ? `${prev} ${transcript}` : transcript;
         return newText.slice(0, 2000);
       });
-      clearTranscript();
     }
-  }, [transcript, clearTranscript]);
+  }, [transcript, isRecording]);
 
   const handleMicClick = async () => {
     if (isRecording) {
       stopRecording();
     } else {
       topicBeforeRecordingRef.current = topic;
+      setTopic('');
+      setPendingRecordingData(null);
       await startRecording();
     }
   };
 
   const handleCancelRecording = () => {
     stopRecording();
-    clearTranscript();
+    clearRecording();
     setTopic(topicBeforeRecordingRef.current);
+    setPendingRecordingData(null);
   };
 
   const handleDoneRecording = () => {
     stopRecording();
+    if (audioUrl && segments.length > 0) {
+      setPendingRecordingData({
+        audioUrl,
+        segments,
+        recordingDuration: duration,
+      });
+    }
   };
+
+  useEffect(() => {
+    if (!isRecording && audioUrl && segments.length > 0 && !pendingRecordingData) {
+      setPendingRecordingData({
+        audioUrl,
+        segments,
+        recordingDuration: duration,
+      });
+    }
+  }, [isRecording, audioUrl, segments, duration, pendingRecordingData]);
 
   const handleSubmit = () => {
     if (topic.trim() && !isLoading) {
-      onSubmit(topic.trim(), audience, output);
+      onSubmit(topic.trim(), audience, output, pendingRecordingData ?? undefined);
+      setPendingRecordingData(null);
     }
   };
 

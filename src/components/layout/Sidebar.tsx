@@ -1,8 +1,9 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Home, History, Bookmark, Settings, Sparkles, ChevronRight } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Home, History, Bookmark, Settings, Sparkles, ChevronRight, User, LogOut } from 'lucide-react';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
@@ -11,8 +12,40 @@ const navItems = [
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
+const mockUser = {
+  firstName: 'John',
+  lastName: 'Doe',
+  email: 'john@example.com',
+  initials: 'JD',
+};
+
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setIsProfileOpen(false);
+    router.push('/auth');
+  };
+
+  const handleLogin = () => {
+    router.push('/auth');
+  };
 
   return (
     <aside className="hidden md:flex w-60 h-screen flex-col bg-[#0C0C0E] border-r border-[#1F1F22] fixed left-0 top-0">
@@ -48,7 +81,7 @@ export default function Sidebar() {
         </div>
 
         <div className="space-y-4">
-          <div className="p-4 rounded-xl bg-gradient-to-br from-[#FF5C00] to-[#FF7A00]">
+          <div className="p-4 rounded-xl bg-linear-to-br from-[#FF5C00] to-[#FF7A00]">
             <div className="flex items-center gap-2 mb-3">
               <Sparkles size={16} className="text-white" />
               <span className="text-xs font-semibold text-white">Upgrade to Pro</span>
@@ -61,15 +94,54 @@ export default function Sidebar() {
             </button>
           </div>
 
-          <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#1A1A1D] transition-colors cursor-pointer">
-            <div className="w-9 h-9 rounded-full bg-[#1A1A1D] flex items-center justify-center text-sm font-medium text-white">
-              JD
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">John Doe</p>
-              <p className="text-xs text-[#6B6B70] truncate">john@example.com</p>
-            </div>
-            <ChevronRight size={16} className="text-[#6B6B70]" />
+          <div className="relative" ref={dropdownRef}>
+            {isLoggedIn ? (
+              <>
+                <button
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center gap-3 p-2 w-full rounded-lg hover:bg-[#1A1A1D] transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-full bg-[#1A1A1D] flex items-center justify-center text-sm font-medium text-white">
+                    {mockUser.initials}
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium text-white truncate">
+                      {mockUser.firstName} {mockUser.lastName}
+                    </p>
+                    <p className="text-xs text-[#6B6B70] truncate">{mockUser.email}</p>
+                  </div>
+                  <ChevronRight 
+                    size={16} 
+                    className={`text-[#6B6B70] transition-transform ${isProfileOpen ? 'rotate-90' : ''}`} 
+                  />
+                </button>
+
+                {isProfileOpen && (
+                  <div className="absolute bottom-full left-0 right-0 mb-2 bg-[#111113] border border-[#1F1F22] rounded-xl shadow-lg overflow-hidden">
+                    <div className="px-3 py-2.5 border-b border-[#1F1F22]">
+                      <p className="text-xs text-[#6B6B70]">Signed in as</p>
+                      <p className="text-sm text-white font-medium truncate">{mockUser.email}</p>
+                    </div>
+                    
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-3 px-3 py-2.5 w-full text-sm text-[#FF3B30] hover:bg-[#2A1515] transition-colors"
+                    >
+                      <LogOut size={16} />
+                      <span>Log out</span>
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <button
+                onClick={handleLogin}
+                className="flex items-center justify-center gap-2 w-full p-3 rounded-lg bg-[#1A1A1D] hover:bg-[#2A2A2D] transition-colors"
+              >
+                <User size={18} className="text-[#8B8B90]" />
+                <span className="text-sm font-medium text-white">Sign In</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

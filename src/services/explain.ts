@@ -1,4 +1,4 @@
-import type { ExplanationResponse, AudienceLevel } from '@/types';
+import type { ExplanationResponse, AudienceLevel, RecordingData } from '@/types';
 import { simulateAPICall, generateId } from './api';
 
 const MOCK_EXPLANATIONS: Record<string, Partial<ExplanationResponse>> = {
@@ -85,17 +85,20 @@ function getMockExplanation(topic: string): Partial<ExplanationResponse> {
 
 export async function generateExplanation(
   topic: string,
-  audience: AudienceLevel = '5yo'
+  audience: AudienceLevel = '5yo',
+  recordingData?: RecordingData
 ): Promise<ExplanationResponse> {
   return simulateAPICall(
     () => {
       const mockData = getMockExplanation(topic);
       
+      const hasRecording = recordingData?.audioUrl && recordingData.segments.length > 0;
+      
       const explanation: ExplanationResponse = {
         id: generateId(),
         title: mockData.title ?? topic,
-        script_for_audio: mockData.script_for_audio ?? '',
-        audioDuration: mockData.audioDuration ?? 120,
+        script_for_audio: hasRecording ? recordingData.segments.map(s => s.text).join(' ') : (mockData.script_for_audio ?? ''),
+        audioDuration: hasRecording ? recordingData.recordingDuration : (mockData.audioDuration ?? 120),
         createdAt: new Date().toISOString(),
         audience,
         isSaved: false,
@@ -107,6 +110,7 @@ export async function generateExplanation(
           why_it_matters: '',
           related_topics: [],
         },
+        recordingData: hasRecording ? recordingData : undefined,
       };
       
       return explanation;

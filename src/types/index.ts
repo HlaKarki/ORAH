@@ -12,6 +12,18 @@ export interface OnePageContent {
   related_topics: string[];
 }
 
+export interface TranscriptSegment {
+  text: string;
+  startTime: number;
+  endTime: number;
+}
+
+export interface RecordingData {
+  audioUrl: string | null;
+  segments: TranscriptSegment[];
+  recordingDuration: number;
+}
+
 export interface ExplanationResponse {
   id: string;
   title: string;
@@ -21,6 +33,7 @@ export interface ExplanationResponse {
   audience: AudienceLevel;
   isSaved: boolean;
   one_page_content: OnePageContent;
+  recordingData?: RecordingData;
 }
 
 export type AppState = 'idle' | 'processing' | 'results' | 'error';

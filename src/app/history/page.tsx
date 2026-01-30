@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Play, Clock, Trash2, Calendar } from 'lucide-react';
+import { Search, Play, Clock, Trash2, Calendar, Mic } from 'lucide-react';
 import type { ExplanationResponse, HistoryFilter } from '@/types';
 import { useApp } from '@/context/AppContext';
 import { getHistory, deleteFromHistory, clearHistory, searchHistory } from '@/services/history';
@@ -184,6 +184,11 @@ export default function HistoryPage() {
               </div>
               
               <div className="hidden sm:flex items-center gap-4 text-xs text-[#6B6B70]">
+                {item.recordingData?.audioUrl && (
+                  <div className="flex items-center gap-1 text-green-500" title="Voice recorded">
+                    <Mic size={12} />
+                  </div>
+                )}
                 <div className="flex items-center gap-1">
                   <Clock size={12} />
                   <span>{formatDuration(item.audioDuration)}</span>

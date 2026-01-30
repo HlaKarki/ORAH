@@ -7,7 +7,7 @@ import ProcessingOverlay from '@/components/shared/ProcessingOverlay';
 import ErrorOverlay from '@/components/shared/ErrorOverlay';
 import { generateExplanation } from '@/services/explain';
 import { addToHistory } from '@/services/history';
-import type { AudienceLevel, OutputFormat, ExplanationResponse } from '@/types';
+import type { AudienceLevel, OutputFormat, ExplanationResponse, RecordingData } from '@/types';
 
 export default function HomePage() {
   const router = useRouter();
@@ -19,11 +19,11 @@ export default function HomePage() {
     addToast
   } = useApp();
 
-  const handleSubmit = async (topic: string, audience: AudienceLevel, _output: OutputFormat) => {
+  const handleSubmit = async (topic: string, audience: AudienceLevel, _output: OutputFormat, recordingData?: RecordingData) => {
     setAppState('processing');
     
     try {
-      const explanation = await generateExplanation(topic, audience);
+      const explanation = await generateExplanation(topic, audience, recordingData);
       await addToHistory(explanation);
       addToast('success', 'Explanation generated successfully!');
       router.push(`/results/${explanation.id}`);

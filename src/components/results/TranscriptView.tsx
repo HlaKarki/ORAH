@@ -1,11 +1,13 @@
 'use client';
 
 import { useMemo, useRef, useEffect } from 'react';
+import type { TranscriptSegment } from '@/types';
 
 interface TranscriptViewProps {
   script: string;
   currentTime: number;
   duration: number;
+  segments?: TranscriptSegment[];
   onSeek?: (time: number) => void;
 }
 
@@ -13,12 +15,17 @@ export default function TranscriptView({
   script, 
   currentTime, 
   duration,
+  segments: providedSegments,
   onSeek 
 }: TranscriptViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLButtonElement>(null);
 
-  const sentences = useMemo(() => {
+  const segments = useMemo(() => {
+    if (providedSegments && providedSegments.length > 0) {
+      return providedSegments;
+    }
+    
     if (!script || script.trim().length === 0) {
       return [];
     }
@@ -39,7 +46,7 @@ export default function TranscriptView({
       startTime: index * timePerSentence,
       endTime: (index + 1) * timePerSentence,
     }));
-  }, [script, duration]);
+  }, [script, duration, providedSegments]);
 
   useEffect(() => {
     if (activeRef.current && containerRef.current) {
@@ -56,7 +63,7 @@ export default function TranscriptView({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  if (sentences.length === 0) {
+  if (segments.length === 0) {
     return (
       <div className="text-center py-8 text-[#6B6B70]">
         No transcript available
@@ -64,17 +71,25 @@ export default function TranscriptView({
     );
   }
 
+  const hasRealTimestamps = providedSegments && providedSegments.length > 0;
+
   return (
     <div ref={containerRef} className="space-y-2 max-h-96 overflow-y-auto pr-2">
-      {sentences.map((sentence, index) => {
-        const isActive = currentTime >= sentence.startTime && currentTime < sentence.endTime;
-        const isPast = currentTime >= sentence.endTime;
+      {hasRealTimestamps && (
+        <div className="text-xs text-[#6B6B70] mb-3 flex items-center gap-2">
+          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+          Timestamps from recording
+        </div>
+      )}
+      {segments.map((segment, index) => {
+        const isActive = currentTime >= segment.startTime && currentTime < segment.endTime;
+        const isPast = currentTime >= segment.endTime;
         
         return (
           <button
             key={index}
             ref={isActive ? activeRef : null}
-            onClick={() => onSeek?.(sentence.startTime)}
+            onClick={() => onSeek?.(segment.startTime)}
             className={`w-full text-left p-3 rounded-lg transition-all cursor-pointer ${
               isActive 
                 ? 'bg-[#FF5C00]/10 border border-[#FF5C00]/30' 
@@ -87,12 +102,12 @@ export default function TranscriptView({
               <span className={`text-xs font-mono min-w-[3rem] flex-shrink-0 ${
                 isActive ? 'text-[#FF5C00]' : isPast ? 'text-[#6B6B70]' : 'text-[#4A4A4F]'
               }`}>
-                {formatTime(sentence.startTime)}
+                {formatTime(segment.startTime)}
               </span>
               <p className={`text-sm leading-relaxed ${
                 isActive ? 'text-white font-medium' : isPast ? 'text-[#8B8B90]' : 'text-[#6B6B70]'
               }`}>
-                {sentence.text}
+                {segment.text}
               </p>
             </div>
           </button>

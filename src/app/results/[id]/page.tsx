@@ -134,6 +134,7 @@ export default function ResultsPage() {
             ref={audioPlayerRef}
             script={explanation.script_for_audio}
             duration={explanation.audioDuration}
+            audioUrl={explanation.recordingData?.audioUrl}
             onTimeUpdate={handleTimeUpdate}
             seekTime={seekTime}
           />
@@ -170,6 +171,7 @@ export default function ResultsPage() {
                   script={explanation.script_for_audio}
                   currentTime={currentTime}
                   duration={explanation.audioDuration}
+                  segments={explanation.recordingData?.segments}
                   onSeek={handleSeek}
                 />
               )}
