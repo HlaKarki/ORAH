@@ -1,29 +1,70 @@
-# Create T3 App
+<p align="center">
+  <img src="public/assets/logo.png" alt="ExplainIt" height="40" />
+</p>
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+<p align="center">
+  Transform complex topics into simple explanations with AI-powered audio and PDF summaries.
+</p>
 
-## What's next? How do I make an app with this?
+<p align="center">
+  <img src="public/assets/hero.png" alt="ExplainIt App" width="720" />
+</p>
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+---
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## What is ExplainIt?
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+Paste any topic, article, or concept. Select your audience level. Get a complete explanation with audio narration and a downloadable one-page PDF.
 
-## Learn More
+## Features
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+- **AI Explanations** — AI-powered breakdowns tailored to your audience (5-year-old to expert)
+- **Audio Playback** — Listen to explanations via browser text-to-speech
+- **PDF Export** — Download a formatted one-page summary
+- **Voice Input** — Ask questions by speaking
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+## Quick Start
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+```bash
+# Clone and install
+git clone https://github.com/yourusername/explainit.git
+cd explainit
+bun install
 
-## How do I deploy this?
+# Configure
+cp .env.example .env
+# Add your OPENAI_API_KEY to .env
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+# Run
+bun dev
+```
+
+Open [localhost:3000](http://localhost:3000)
+
+## Tech Stack
+
+- **Next.js 14** — App Router
+- **Tailwind CSS** — Styling
+- **OpenAI** — GPT-4o-mini
+- **Web Speech API** — Text-to-speech
+- **jsPDF** — PDF generation
+
+## API
+
+```typescript
+interface ExplanationResponse {
+  title: string;
+  script_for_audio: string;
+  one_page_content: {
+    summary_1_sentence: string;
+    analogy: string;
+    key_points: string[];
+    key_terms: string[];
+    why_it_matters: string;
+  }
+}
+```
+
+## License
+
+MIT
