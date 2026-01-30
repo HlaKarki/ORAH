@@ -1,13 +1,23 @@
 import OpenAI from 'openai'
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
+
+interface TeachRequest {
+  topic: string
+  focusQuestion?: string
+}
+
+interface TeachResponse {
+  teaching?: string
+  question?: string
+}
 
 const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY || '',
+  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY ?? '',
 })
 
 export async function POST(request: NextRequest) {
   try {
-    const { topic, focusQuestion } = await request.json()
+    const { topic, focusQuestion } = (await request.json()) as TeachRequest
 
     if (!topic) {
       return NextResponse.json({ error: 'Topic is required' }, { status: 400 })
@@ -58,13 +68,12 @@ Respond in this exact JSON format:
       response_format: { type: 'json_object' }
     })
 
-    const text = completion.choices[0]?.message?.content || '{}'
-    const data = JSON.parse(text)
+    const text = completion.choices[0]?.message?.content ?? '{}'
+    const data = JSON.parse(text) as TeachResponse
 
-    // Generate audio if ElevenLabs key is available
     let audioUrl: string | undefined
 
-    if (process.env.ELEVENLABS_API_KEY) {
+    if (process.env.ELEVENLABS_API_KEY && data.teaching) {
       try {
         const audioResponse = await fetch('https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM', {
           method: 'POST',
@@ -89,13 +98,15 @@ Respond in this exact JSON format:
         }
       } catch (audioError) {
         console.error('TTS error:', audioError)
-        // Continue without audio
       }
     }
 
+    const teaching = data.teaching
+    const question = data.question
+
     return NextResponse.json({
-      teaching: data.teaching,
-      question: data.question,
+      teaching,
+      question,
       audioUrl
     })
 

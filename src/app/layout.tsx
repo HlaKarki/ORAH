@@ -1,28 +1,29 @@
-import "@/styles/globals.css";
-
-import { type Metadata } from "next";
-import { Geist } from "next/font/google";
-
-import { TRPCReactProvider } from "@/trpc/react";
+import '@/styles/globals.css';
+import { type Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import { AppProvider } from '@/context/AppContext';
+import { AppLayout } from '@/components/layout';
 
 export const metadata: Metadata = {
-  title: "Orah",
-  description: "An oral-first mentor/professor/learning partner.",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  title: 'ExplainIt - Learn Anything Simply',
+  description: 'Turn complex topics into simple explanations with AI-powered audio and PDF summaries.',
+  icons: [{ rel: 'icon', url: '/favicon.ico' }],
 };
 
-const geist = Geist({
-  subsets: ["latin"],
-  variable: "--font-geist-sans",
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
 });
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geist.variable}`}>
-      <body className="bg-white text-neutral-900">
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+    <html lang="en" className={inter.variable}>
+      <body className="font-sans antialiased">
+        <AppProvider>
+          <AppLayout>{children}</AppLayout>
+        </AppProvider>
       </body>
     </html>
   );

@@ -81,8 +81,9 @@ export default function InputScreen({ onSubmit }: InputScreenProps) {
         throw new Error('Transcription failed')
       }
 
-      const data = await response.json()
-      setTopic((prev) => (prev ? `${prev} ${data.transcript}` : data.transcript).trim())
+      const data = (await response.json()) as { transcript?: string }
+      const transcript = data.transcript ?? ''
+      setTopic((prev) => (prev ? `${prev} ${transcript}` : transcript).trim())
     } catch (err) {
       console.error('Transcription error:', err)
       setError('Failed to transcribe audio')
@@ -95,7 +96,7 @@ export default function InputScreen({ onSubmit }: InputScreenProps) {
     if (isRecording) {
       stopRecording()
     } else {
-      startRecording()
+      void startRecording()
     }
   }
 
@@ -126,7 +127,7 @@ export default function InputScreen({ onSubmit }: InputScreenProps) {
             type="button"
             onClick={toggleRecording}
             disabled={isTranscribing}
-            className={`absolute bottom-4 right-4 p-3 rounded-full transition-all
+            className={`absolute bottom-4 right-4 p-3 rounded-full transition-all cursor-pointer
                      ${isRecording
                        ? 'bg-red-500 hover:bg-red-600 animate-pulse'
                        : 'bg-purple-600 hover:bg-purple-500'
@@ -158,7 +159,7 @@ export default function InputScreen({ onSubmit }: InputScreenProps) {
                    hover:from-purple-500 hover:to-pink-500
                    disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed
                    text-white font-semibold py-4 px-6 rounded-xl text-lg
-                   transition-all duration-200 transform hover:scale-[1.02]"
+                   transition-all duration-200 transform hover:scale-[1.02] cursor-pointer"
         >
           Start Learning
         </button>
@@ -172,7 +173,7 @@ export default function InputScreen({ onSubmit }: InputScreenProps) {
               key={example}
               onClick={() => setTopic(example)}
               className="bg-gray-700/50 hover:bg-gray-700 text-gray-300 text-sm
-                       px-3 py-2 rounded-lg transition-colors"
+                       px-3 py-2 rounded-lg transition-colors cursor-pointer"
             >
               {example}
             </button>

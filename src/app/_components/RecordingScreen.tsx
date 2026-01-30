@@ -50,7 +50,7 @@ export default function RecordingScreen({
             <button
               onClick={() => setMode('voice')}
               className="bg-gray-700/50 hover:bg-gray-700 border border-gray-600
-                       rounded-xl p-6 transition-all hover:border-purple-500 group"
+                       rounded-xl p-6 transition-all hover:border-purple-500 group cursor-pointer"
             >
               <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-500 to-pink-500
                             rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -66,7 +66,7 @@ export default function RecordingScreen({
             <button
               onClick={() => setMode('type')}
               className="bg-gray-700/50 hover:bg-gray-700 border border-gray-600
-                       rounded-xl p-6 transition-all hover:border-purple-500 group"
+                       rounded-xl p-6 transition-all hover:border-purple-500 group cursor-pointer"
             >
               <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-cyan-500
                             rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -87,7 +87,7 @@ export default function RecordingScreen({
         <div>
           <button
             onClick={() => setMode('choose')}
-            className="text-gray-400 hover:text-white mb-6 flex items-center gap-2"
+            className="text-gray-400 hover:text-white mb-6 flex items-center gap-2 cursor-pointer"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -103,7 +103,7 @@ export default function RecordingScreen({
         <div>
           <button
             onClick={() => setMode('choose')}
-            className="text-gray-400 hover:text-white mb-6 flex items-center gap-2"
+            className="text-gray-400 hover:text-white mb-6 flex items-center gap-2 cursor-pointer"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -132,7 +132,7 @@ export default function RecordingScreen({
                        hover:from-purple-500 hover:to-pink-500
                        disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed
                        text-white font-semibold py-3 px-8 rounded-xl
-                       transition-all duration-200"
+                       transition-all duration-200 cursor-pointer"
             >
               Submit Explanation
             </button>

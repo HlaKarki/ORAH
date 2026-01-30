@@ -154,11 +154,11 @@ export default function VoiceRecorder({ onComplete }: VoiceRecorderProps) {
         <button
           onClick={isRecording ? stopRecording : startRecording}
           disabled={!!audioBlob}
-          className={`absolute inset-8 rounded-full flex items-center justify-center transition-all
+          className={`absolute inset-8 rounded-full flex items-center justify-center transition-all cursor-pointer
                      ${isRecording
                        ? 'bg-red-500 hover:bg-red-600'
                        : audioBlob
-                         ? 'bg-gray-600'
+                         ? 'bg-gray-600 cursor-not-allowed'
                          : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105'}`}
         >
           {isRecording ? (
@@ -190,7 +190,7 @@ export default function VoiceRecorder({ onComplete }: VoiceRecorderProps) {
         <div className="flex justify-center gap-4 mb-6">
           <button
             onClick={isPaused ? resumeRecording : pauseRecording}
-            className="bg-gray-700 hover:bg-gray-600 px-6 py-2 rounded-lg transition-colors"
+            className="bg-gray-700 hover:bg-gray-600 px-6 py-2 rounded-lg transition-colors cursor-pointer"
           >
             {isPaused ? 'Resume' : 'Pause'}
           </button>
@@ -210,7 +210,7 @@ export default function VoiceRecorder({ onComplete }: VoiceRecorderProps) {
         <div className="flex gap-4 justify-center">
           <button
             onClick={resetRecording}
-            className="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-xl transition-colors"
+            className="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-xl transition-colors cursor-pointer"
           >
             Re-record
           </button>
@@ -218,7 +218,7 @@ export default function VoiceRecorder({ onComplete }: VoiceRecorderProps) {
             onClick={handleSubmit}
             className="bg-gradient-to-r from-purple-600 to-pink-600
                      hover:from-purple-500 hover:to-pink-500
-                     px-8 py-3 rounded-xl font-semibold transition-all"
+                     px-8 py-3 rounded-xl font-semibold transition-all cursor-pointer"
           >
             Submit Recording
           </button>

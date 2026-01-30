@@ -1,4 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
+
+interface TranscribeResponse {
+  text?: string
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,16 +13,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Audio file is required' }, { status: 400 })
     }
 
-    // Create form data for ElevenLabs
     const elevenlabsFormData = new FormData()
     elevenlabsFormData.append('file', audioFile)
     elevenlabsFormData.append('model_id', 'scribe_v2')
 
-    // Call ElevenLabs Speech-to-Text API
     const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
       method: 'POST',
       headers: {
-        'xi-api-key': process.env.ELEVENLABS_API_KEY || '',
+        'xi-api-key': process.env.ELEVENLABS_API_KEY ?? '',
       },
       body: elevenlabsFormData,
     })
@@ -29,8 +31,8 @@ export async function POST(request: NextRequest) {
       throw new Error(`Transcription failed: ${response.status}`)
     }
 
-    const data = await response.json()
-    const transcript = data.text || ''
+    const data = (await response.json()) as TranscribeResponse
+    const transcript = data.text ?? ''
 
     return NextResponse.json({ transcript })
 

@@ -35,7 +35,7 @@ export default function TeachingScreen({
     if (isPlaying) {
       audioRef.current.pause()
     } else {
-      audioRef.current.play()
+      void audioRef.current.play()
       if (!hasListened) setHasListened(true)
     }
     setIsPlaying(!isPlaying)
@@ -60,14 +60,14 @@ export default function TeachingScreen({
             <button
               onClick={togglePlayPause}
               className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full
-                       flex items-center justify-center hover:scale-105 transition-transform"
+                       flex items-center justify-center hover:scale-105 transition-transform cursor-pointer"
             >
               {isPlaying ? (
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
                 </svg>
               ) : (
-                <svg className="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M8 5v14l11-7z" />
                 </svg>
               )}
@@ -80,7 +80,7 @@ export default function TeachingScreen({
             </div>
             <button
               onClick={() => setShowText(!showText)}
-              className="text-purple-400 hover:text-purple-300 text-sm underline"
+              className="text-purple-400 hover:text-purple-300 text-sm underline cursor-pointer"
             >
               {showText ? 'Hide text' : 'Show text'}
             </button>
@@ -104,12 +104,12 @@ export default function TeachingScreen({
       {/* Continue Button */}
       <button
         onClick={onComplete}
-        disabled={audioUrl && !hasListened}
+        disabled={!!audioUrl && !hasListened}
         className="w-full bg-gradient-to-r from-purple-600 to-pink-600
                  hover:from-purple-500 hover:to-pink-500
                  disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed
                  text-white font-semibold py-4 px-6 rounded-xl text-lg
-                 transition-all duration-200"
+                 transition-all duration-200 cursor-pointer"
       >
         {audioUrl && !hasListened ? 'Listen first, then continue' : 'I\'m ready to explain!'}
       </button>

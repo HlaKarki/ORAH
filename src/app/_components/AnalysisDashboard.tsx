@@ -76,7 +76,7 @@ export default function AnalysisDashboard({
 }: AnalysisDashboardProps) {
   const currentAttempt = attemptHistory[attemptHistory.length - 1]
   const showImprovement = attemptHistory.length > 1
-  const previousScore = attemptHistory.length > 1 ? attemptHistory[attemptHistory.length - 2].score : 0
+  const previousScore = attemptHistory.length > 1 ? attemptHistory[attemptHistory.length - 2]?.score ?? 0 : 0
   const improvement = analysis.score - previousScore
 
   return (
@@ -93,7 +93,7 @@ export default function AnalysisDashboard({
               {analysis.score < 4 && 'Keep practicing! 📚'}
             </h2>
             <p className="text-gray-400">
-              Attempt #{currentAttempt?.attempt || 1}
+              Attempt #{currentAttempt?.attempt ?? 1}
               {showImprovement && (
                 <span className={improvement > 0 ? 'text-green-400 ml-2' : improvement < 0 ? 'text-red-400 ml-2' : 'text-gray-500 ml-2'}>
                   ({improvement > 0 ? '+' : ''}{improvement} from last)
@@ -184,7 +184,7 @@ export default function AnalysisDashboard({
         <button
           onClick={onTryAgain}
           className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold
-                   py-4 px-6 rounded-xl transition-all"
+                   py-4 px-6 rounded-xl transition-all cursor-pointer"
         >
           Try Again (Same Question)
         </button>
@@ -192,7 +192,7 @@ export default function AnalysisDashboard({
           onClick={onNextQuestion}
           className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600
                    hover:from-purple-500 hover:to-pink-500
-                   text-white font-semibold py-4 px-6 rounded-xl transition-all"
+                   text-white font-semibold py-4 px-6 rounded-xl transition-all cursor-pointer"
         >
           Next Question →
         </button>
@@ -200,7 +200,7 @@ export default function AnalysisDashboard({
 
       <button
         onClick={onNewTopic}
-        className="w-full text-gray-400 hover:text-white py-2 transition-colors"
+        className="w-full text-gray-400 hover:text-white py-2 transition-colors cursor-pointer"
       >
         ← Start with a new topic
       </button>

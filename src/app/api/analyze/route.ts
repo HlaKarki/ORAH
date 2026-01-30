@@ -1,13 +1,28 @@
 import OpenAI from 'openai'
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
+
+interface AnalyzeRequest {
+  topic: string
+  teaching: string
+  question: string
+  userExplanation: string
+}
+
+interface AnalyzeResponse {
+  score?: number
+  whatYouNailed?: string[]
+  whatYouMissed?: string[]
+  howToImprove?: string[]
+  nextQuestion?: string
+}
 
 const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY || '',
+  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY ?? '',
 })
 
 export async function POST(request: NextRequest) {
   try {
-    const { topic, teaching, question, userExplanation } = await request.json()
+    const { topic, teaching, question, userExplanation } = (await request.json()) as AnalyzeRequest
 
     if (!userExplanation) {
       return NextResponse.json({ error: 'User explanation is required' }, { status: 400 })
@@ -66,22 +81,25 @@ Important:
       response_format: { type: 'json_object' }
     })
 
-    const text = completion.choices[0]?.message?.content || '{}'
-    const data = JSON.parse(text)
+    const text = completion.choices[0]?.message?.content ?? '{}'
+    const data = JSON.parse(text) as AnalyzeResponse
 
-    // Validate and ensure arrays have content
+    const whatYouNailed = Array.isArray(data.whatYouNailed) && data.whatYouNailed.length > 0
+      ? data.whatYouNailed
+      : ['Attempted to explain the concept', 'Showed willingness to learn']
+    const whatYouMissed = Array.isArray(data.whatYouMissed) && data.whatYouMissed.length > 0
+      ? data.whatYouMissed
+      : ['Some key details were missing', 'Could use more specific examples']
+    const howToImprove = Array.isArray(data.howToImprove) && data.howToImprove.length > 0
+      ? data.howToImprove
+      : ['Review the core concept', 'Try using a real-world analogy', 'Focus on explaining the "why"']
+
     const analysis = {
       score: Math.min(10, Math.max(0, Number(data.score) || 5)),
-      whatYouNailed: Array.isArray(data.whatYouNailed) && data.whatYouNailed.length > 0
-        ? data.whatYouNailed
-        : ['Attempted to explain the concept', 'Showed willingness to learn'],
-      whatYouMissed: Array.isArray(data.whatYouMissed) && data.whatYouMissed.length > 0
-        ? data.whatYouMissed
-        : ['Some key details were missing', 'Could use more specific examples'],
-      howToImprove: Array.isArray(data.howToImprove) && data.howToImprove.length > 0
-        ? data.howToImprove
-        : ['Review the core concept', 'Try using a real-world analogy', 'Focus on explaining the "why"'],
-      nextQuestion: data.nextQuestion || `Can you explain another aspect of ${topic}?`
+      whatYouNailed,
+      whatYouMissed,
+      howToImprove,
+      nextQuestion: data.nextQuestion ?? `Can you explain another aspect of ${topic}?`
     }
 
     return NextResponse.json(analysis)
