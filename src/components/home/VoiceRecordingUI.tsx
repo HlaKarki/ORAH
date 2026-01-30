@@ -6,15 +6,11 @@ import { X, Check } from 'lucide-react';
 interface VoiceRecordingUIProps {
   duration: number;
   isRecording: boolean;
-  onCancel: () => void;
-  onDone: () => void;
 }
 
 export default function VoiceRecordingUI({
   duration,
   isRecording,
-  onCancel,
-  onDone,
 }: VoiceRecordingUIProps) {
   const [bars, setBars] = useState<number[]>([]);
   const animationRef = useRef<NodeJS.Timeout | null>(null);

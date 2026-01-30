@@ -25,6 +25,12 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
+  const isRecordingRef = useRef(false);
+  const shouldRestartRef = useRef(false);
+
+  useEffect(() => {
+    isRecordingRef.current = isRecording;
+  }, [isRecording]);
 
   const startTimer = useCallback(() => {
     startTimeRef.current = Date.now();
@@ -54,6 +60,10 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
     }
 
     try {
+      setTranscript('');
+      setDuration(0);
+      shouldRestartRef.current = true;
+
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
@@ -63,7 +73,9 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
         setIsRecording(true);
         setIsPaused(false);
         setError(null);
-        startTimer();
+        if (!intervalRef.current) {
+          startTimer();
+        }
       };
 
       recognition.onresult = (event) => {
@@ -78,18 +90,32 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
           }
         }
 
-        setTranscript((prev) => prev + finalTranscript);
+        if (finalTranscript) {
+          setTranscript((prev) => prev + finalTranscript);
+        }
       };
 
       recognition.onerror = (event) => {
+        if (event.error === 'no-speech') {
+          return;
+        }
+        if (event.error === 'aborted') {
+          return;
+        }
         setError(`Speech recognition error: ${event.error}`);
+        shouldRestartRef.current = false;
         setIsRecording(false);
         stopTimer();
       };
 
       recognition.onend = () => {
-        if (isRecording && !isPaused) {
-          recognition.start();
+        if (shouldRestartRef.current && isRecordingRef.current) {
+          try {
+            recognition.start();
+          } catch {
+            setIsRecording(false);
+            stopTimer();
+          }
         } else {
           setIsRecording(false);
           stopTimer();
@@ -101,11 +127,15 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start recording');
     }
-  }, [isRecording, isPaused, startTimer, stopTimer]);
+  }, [startTimer, stopTimer]);
 
   const stopRecording = useCallback(() => {
+    shouldRestartRef.current = false;
     if (recognitionRef.current) {
-      recognitionRef.current.stop();
+      try {
+        recognitionRef.current.stop();
+      } catch {
+      }
       recognitionRef.current = null;
     }
     setIsRecording(false);
@@ -115,7 +145,11 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
 
   const pauseRecording = useCallback(() => {
     if (recognitionRef.current && isRecording) {
-      recognitionRef.current.stop();
+      shouldRestartRef.current = false;
+      try {
+        recognitionRef.current.stop();
+      } catch {
+      }
       setIsPaused(true);
       stopTimer();
     }
@@ -123,7 +157,11 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
 
   const resumeRecording = useCallback(() => {
     if (recognitionRef.current && isPaused) {
-      recognitionRef.current.start();
+      shouldRestartRef.current = true;
+      try {
+        recognitionRef.current.start();
+      } catch {
+      }
       setIsPaused(false);
       startTimer();
     }
@@ -136,9 +174,18 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
 
   useEffect(() => {
     return () => {
-      stopRecording();
+      shouldRestartRef.current = false;
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {
+        }
+      }
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
     };
-  }, [stopRecording]);
+  }, []);
 
   return {
     isRecording,

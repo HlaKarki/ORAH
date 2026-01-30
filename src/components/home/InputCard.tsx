@@ -72,8 +72,6 @@ export default function InputCard({ onSubmit, isLoading = false }: InputCardProp
           <VoiceRecordingUI
             duration={duration}
             isRecording={isRecording}
-            onCancel={handleCancelRecording}
-            onDone={handleDoneRecording}
           />
         ) : (
           <div className="relative">
