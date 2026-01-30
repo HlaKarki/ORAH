@@ -1,65 +1,41 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import { X, Check } from 'lucide-react';
 
 interface VoiceRecordingUIProps {
   duration: number;
   isRecording: boolean;
+  audioLevels: number[];
 }
 
 export default function VoiceRecordingUI({
   duration,
-  isRecording,
+  audioLevels,
 }: VoiceRecordingUIProps) {
-  const [bars, setBars] = useState<number[]>([]);
-  const animationRef = useRef<NodeJS.Timeout | null>(null);
-
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  useEffect(() => {
-    const generateBars = () => {
-      const newBars = Array.from({ length: 15 }, () => 
-        Math.random() * 24 + 16
-      );
-      setBars(newBars);
-    };
-
-    generateBars();
-
-    if (isRecording) {
-      animationRef.current = setInterval(generateBars, 150);
-    }
-
-    return () => {
-      if (animationRef.current) {
-        clearInterval(animationRef.current);
-      }
-    };
-  }, [isRecording]);
-
   return (
-    <div className="bg-[#0C0C0E] rounded-xl p-6 h-[180px] flex flex-col items-center justify-center gap-5">
-      <div className="flex items-center gap-2">
+    <div className="bg-[#0C0C0E] rounded-xl px-4 py-3 flex items-center justify-between">
+      <div className="flex items-center gap-3">
         <span className="w-2.5 h-2.5 bg-[#FF3B30] rounded-full animate-pulse" />
         <span className="text-[#FF3B30] text-sm font-semibold">Recording...</span>
       </div>
 
-      <div className="flex items-center justify-center gap-[3px] h-12">
-        {bars.map((height, index) => (
+      <div className="flex items-center gap-[2px] h-6">
+        {audioLevels.map((height, index) => (
           <div
             key={index}
-            className="w-1 bg-[#FF5C00] rounded-sm transition-all duration-150"
+            className="w-[3px] bg-[#FF5C00] rounded-sm transition-all duration-75"
             style={{ height: `${height}px` }}
           />
         ))}
       </div>
 
-      <span className="text-white text-2xl font-semibold font-mono">
+      <span className="text-white text-base font-semibold font-mono min-w-[50px] text-right">
         {formatTime(duration)}
       </span>
     </div>

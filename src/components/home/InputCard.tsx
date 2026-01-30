@@ -24,6 +24,7 @@ export default function InputCard({ onSubmit, isLoading = false }: InputCardProp
     duration,
     transcript,
     error: recordingError,
+    audioLevels,
     startRecording,
     stopRecording,
     clearTranscript,
@@ -68,31 +69,33 @@ export default function InputCard({ onSubmit, isLoading = false }: InputCardProp
   return (
     <div className="card p-6 space-y-5">
       <div className="space-y-3">
-        {isRecording ? (
+        {isRecording && (
           <VoiceRecordingUI
             duration={duration}
             isRecording={isRecording}
+            audioLevels={audioLevels}
           />
-        ) : (
-          <div className="relative">
-            <textarea
-              value={topic}
-              onChange={(e) => setTopic(e.target.value.slice(0, 2000))}
-              placeholder={"Type or paste anything here...\n\ne.g. \"What is quantum computing?\" or paste a Wikipedia article"}
-              className="w-full h-36 p-4 bg-[#0C0C0E] border border-[#1F1F22] rounded-xl text-white placeholder-[#4A4A4F] text-[15px] leading-relaxed resize-none focus:outline-none focus:border-[#FF5C00] transition-colors"
-              disabled={isLoading}
-            />
-          </div>
         )}
+        <div className="relative">
+          <textarea
+            value={topic}
+            onChange={(e) => setTopic(e.target.value.slice(0, 2000))}
+            placeholder={isRecording ? "Listening... speak now" : "Type or paste anything here...\n\ne.g. \"What is quantum computing?\" or paste a Wikipedia article"}
+            className={`w-full h-36 p-4 bg-[#0C0C0E] border rounded-xl text-white placeholder-[#4A4A4F] text-[15px] leading-relaxed resize-none focus:outline-none transition-colors ${
+              isRecording 
+                ? 'border-[#FF3B30] opacity-70 cursor-not-allowed' 
+                : 'border-[#1F1F22] focus:border-[#FF5C00]'
+            }`}
+            disabled={isLoading || isRecording}
+          />
+        </div>
         <div className="flex justify-between text-xs">
           {recordingError ? (
             <span className="text-red-400">{recordingError}</span>
           ) : (
             <span />
           )}
-          {!isRecording && (
-            <span className="text-[#6B6B70]">{topic.length}/2000</span>
-          )}
+          <span className="text-[#6B6B70]">{topic.length}/2000</span>
         </div>
       </div>
 

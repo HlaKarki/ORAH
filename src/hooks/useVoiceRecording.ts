@@ -8,6 +8,7 @@ interface UseVoiceRecordingReturn {
   duration: number;
   transcript: string;
   error: string | null;
+  audioLevels: number[];
   startRecording: () => Promise<void>;
   stopRecording: () => void;
   pauseRecording: () => void;
@@ -21,16 +22,92 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
   const [duration, setDuration] = useState(0);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [audioLevels, setAudioLevels] = useState<number[]>(new Array(20).fill(4));
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
   const isRecordingRef = useRef(false);
   const shouldRestartRef = useRef(false);
+  
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const isAnalyzingRef = useRef(false);
 
   useEffect(() => {
     isRecordingRef.current = isRecording;
   }, [isRecording]);
+
+  const updateAudioLevels = useCallback(() => {
+    if (!analyserRef.current || !isAnalyzingRef.current) {
+      return;
+    }
+
+    const analyser = analyserRef.current;
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(dataArray);
+
+    const numBars = 20;
+    const step = Math.floor(dataArray.length / numBars);
+    const levels: number[] = [];
+
+    for (let i = 0; i < numBars; i++) {
+      let sum = 0;
+      for (let j = 0; j < step; j++) {
+        sum += dataArray[i * step + j] ?? 0;
+      }
+      const avg = sum / step;
+      const normalized = Math.max(4, (avg / 255) * 28);
+      levels.push(normalized);
+    }
+
+    setAudioLevels(levels);
+    animationFrameRef.current = requestAnimationFrame(updateAudioLevels);
+  }, []);
+
+  const startAudioAnalysis = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+
+      const audioContext = new AudioContext();
+      audioContextRef.current = audioContext;
+
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
+      analyserRef.current = analyser;
+
+      const source = audioContext.createMediaStreamSource(stream);
+      source.connect(analyser);
+
+      updateAudioLevels();
+    } catch (err) {
+      console.error('Failed to start audio analysis:', err);
+    }
+  }, [updateAudioLevels]);
+
+  const stopAudioAnalysis = useCallback(() => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current = null;
+    }
+
+    if (audioContextRef.current) {
+      void audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+
+    analyserRef.current = null;
+    setAudioLevels(new Array(20).fill(4));
+  }, []);
 
   const startTimer = useCallback(() => {
     startTimeRef.current = Date.now();
@@ -63,6 +140,8 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
       setTranscript('');
       setDuration(0);
       shouldRestartRef.current = true;
+
+      await startAudioAnalysis();
 
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
@@ -106,6 +185,7 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
         shouldRestartRef.current = false;
         setIsRecording(false);
         stopTimer();
+        stopAudioAnalysis();
       };
 
       recognition.onend = () => {
@@ -115,6 +195,7 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
           } catch {
             setIsRecording(false);
             stopTimer();
+            stopAudioAnalysis();
           }
         } else {
           setIsRecording(false);
@@ -126,8 +207,9 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
       recognition.start();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start recording');
+      stopAudioAnalysis();
     }
-  }, [startTimer, stopTimer]);
+  }, [startTimer, stopTimer, startAudioAnalysis, stopAudioAnalysis]);
 
   const stopRecording = useCallback(() => {
     shouldRestartRef.current = false;
@@ -141,7 +223,8 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
     setIsRecording(false);
     setIsPaused(false);
     stopTimer();
-  }, [stopTimer]);
+    stopAudioAnalysis();
+  }, [stopTimer, stopAudioAnalysis]);
 
   const pauseRecording = useCallback(() => {
     if (recognitionRef.current && isRecording) {
@@ -184,6 +267,15 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (audioContextRef.current) {
+        void audioContextRef.current.close();
+      }
     };
   }, []);
 
@@ -193,6 +285,7 @@ export function useVoiceRecording(): UseVoiceRecordingReturn {
     duration,
     transcript,
     error,
+    audioLevels,
     startRecording,
     stopRecording,
     pauseRecording,
