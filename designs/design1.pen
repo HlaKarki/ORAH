@@ -1679,13 +1679,16 @@
       "width": 1440,
       "height": 900,
       "fill": "#08080A",
+      "layout": "none",
       "children": [
         {
           "type": "frame",
           "id": "IgHq5",
+          "x": 0,
+          "y": 0,
           "name": "sidebarCopy",
           "width": 240,
-          "height": "fill_container",
+          "height": 900,
           "fill": "#0C0C0E",
           "layout": "vertical",
           "padding": [
@@ -2061,9 +2064,11 @@
         {
           "type": "frame",
           "id": "BUSL2",
+          "x": 240,
+          "y": 0,
           "name": "mainCopy",
-          "width": "fill_container",
-          "height": "fill_container",
+          "width": 1200,
+          "height": 900,
           "layout": "vertical",
           "gap": 40,
           "padding": [
@@ -2569,6 +2574,8 @@
         {
           "type": "frame",
           "id": "4qLK9",
+          "x": 0,
+          "y": 0,
           "name": "Processing Overlay",
           "width": 1440,
           "height": 900,
@@ -2582,7 +2589,7 @@
               "type": "frame",
               "id": "HNNch",
               "name": "loaderCard",
-              "width": 400,
+              "width": 480,
               "fill": "#111113",
               "cornerRadius": 20,
               "stroke": {
@@ -2629,15 +2636,76 @@
                   ]
                 },
                 {
-                  "type": "ellipse",
-                  "id": "cbK44",
-                  "name": "spinnerOuter",
+                  "type": "frame",
+                  "id": "PZICF",
+                  "name": "spinnerContainer",
                   "width": 80,
                   "height": 80,
-                  "stroke": {
-                    "thickness": 3,
-                    "fill": "#1F1F22"
-                  }
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "8EiAi",
+                      "x": 0,
+                      "y": 0,
+                      "name": "spinnerBg",
+                      "width": 80,
+                      "height": 80,
+                      "stroke": {
+                        "thickness": 4,
+                        "fill": "#1F1F22"
+                      }
+                    },
+                    {
+                      "type": "ellipse",
+                      "id": "Rbb6m",
+                      "x": 0,
+                      "y": 0,
+                      "name": "spinnerArc",
+                      "sweepAngle": 90,
+                      "width": 80,
+                      "height": 80,
+                      "stroke": {
+                        "thickness": 4,
+                        "fill": {
+                          "type": "gradient",
+                          "gradientType": "angular",
+                          "enabled": true,
+                          "rotation": 0,
+                          "size": {
+                            "width": 1,
+                            "height": 1
+                          },
+                          "colors": [
+                            {
+                              "color": "#FF5C00",
+                              "position": 0
+                            },
+                            {
+                              "color": "#FF8C00",
+                              "position": 0.5
+                            },
+                            {
+                              "color": "#FF5C0000",
+                              "position": 1
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "icon_font",
+                      "id": "aIDL6",
+                      "x": 24,
+                      "y": 24,
+                      "name": "spinnerIcon",
+                      "width": 32,
+                      "height": 32,
+                      "iconFontName": "brain",
+                      "iconFontFamily": "lucide",
+                      "fill": "#FF5C00"
+                    }
+                  ]
                 },
                 {
                   "type": "frame",
@@ -2677,7 +2745,7 @@
                   "id": "hlISP",
                   "name": "stepsRow",
                   "width": "fill_container",
-                  "gap": 8,
+                  "gap": 12,
                   "justifyContent": "center",
                   "alignItems": "center",
                   "children": [
@@ -2703,7 +2771,7 @@
                           "id": "49t8N",
                           "name": "step1Text",
                           "fill": "#4ADE80",
-                          "content": "Content received",
+                          "content": "Received",
                           "fontFamily": "Inter",
                           "fontSize": 12,
                           "fontWeight": "500"
@@ -2738,7 +2806,7 @@
                           "id": "KcOyb",
                           "name": "step2Text",
                           "fill": "#FF5C00",
-                          "content": "Generating explanation",
+                          "content": "Generating",
                           "fontFamily": "Inter",
                           "fontSize": 12,
                           "fontWeight": "500"
@@ -2777,7 +2845,7 @@
                           "id": "hScu6",
                           "name": "step3Text",
                           "fill": "#6B6B70",
-                          "content": "Creating audio",
+                          "content": "Audio",
                           "fontFamily": "Inter",
                           "fontSize": 12
                         }
