@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Copy, Check, Twitter, Linkedin, MessageCircle } from 'lucide-react';
 
 interface ShareModalProps {
@@ -12,6 +12,14 @@ export default function ShareModal({ explanationId, onClose }: ShareModalProps) 
   const [copied, setCopied] = useState(false);
   
   const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/results/${explanationId}`;
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
 
   const handleCopy = async () => {
     try {
@@ -43,11 +51,11 @@ export default function ShareModal({ explanationId, onClose }: ShareModalProps) 
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-[fadeIn_0.15s_ease-out]"
       onClick={onClose}
     >
       <div 
-        className="card w-full max-w-md mx-4 p-6"
+        className="w-full max-w-md mx-4 p-6 bg-[#141416] border border-[#2A2A2D] rounded-2xl shadow-[0_8px_60px_rgba(0,0,0,0.5)] animate-[slideUp_0.2s_ease-out]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
