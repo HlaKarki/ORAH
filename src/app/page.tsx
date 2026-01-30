@@ -261,12 +261,12 @@ export default function Home() {
     if (profile) {
       addTopicCompleted(`${userInput} (Quiz)`, score, 1)
     }
-    // Return to input
-    handleNewTopic()
+    // Just go back to input, don't reset everything
+    setState('input')
   }
 
   const handleBackToInput = () => {
-    handleNewTopic()
+    setState('input')
   }
 
   const handleShowProfile = () => {
@@ -379,21 +379,8 @@ e.g. &quot;What is quantum computing?&quot; or paste a Wikipedia article"
               </div>
 
               {/* Controls Row */}
-              <div className="flex items-center justify-between">
-                {/* Left: Audience Selector (placeholder) */}
-                <div className="flex items-center gap-3">
-                  <button className="flex items-center gap-2 bg-[#1A1A1D] border border-[#2A2A2E] rounded-lg px-3.5 py-2.5 hover:bg-[#1F1F23] transition-colors">
-                    <svg className="w-4 h-4 text-[#8B8B90]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    <span className="text-sm font-medium text-white">5-Year Old</span>
-                    <svg className="w-3.5 h-3.5 text-[#6B6B70]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                </div>
-
-                {/* Right: Mic & Generate */}
+              <div className="flex items-center justify-end">
+                {/* Mic Button */}
                 <div className="flex items-center gap-3">
                   {/* Voice Input Button */}
                   <button
