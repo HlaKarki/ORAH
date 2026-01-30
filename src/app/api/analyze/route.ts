@@ -1,16 +1,25 @@
 import OpenAI from 'openai'
 import { NextRequest, NextResponse } from 'next/server'
+import type { LearnerProfile } from '@/lib/memory'
+import { getPerformanceSummary } from '@/lib/memory'
 
 const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY || '',
+  apiKey: process.env.OPENAI_API_KEY || '',
 })
 
 export async function POST(request: NextRequest) {
   try {
-    const { topic, teaching, question, userExplanation } = await request.json()
+    const { topic, teaching, question, userExplanation, learnerProfile } = await request.json()
 
     if (!userExplanation) {
       return NextResponse.json({ error: 'User explanation is required' }, { status: 400 })
+    }
+
+    // Build performance context from learner profile if available
+    let performanceContext = 'This is a new learner.'
+    if (learnerProfile) {
+      const profile = learnerProfile as LearnerProfile
+      performanceContext = getPerformanceSummary(profile)
     }
 
     const prompt = `You are an expert teacher analyzing a student's explanation using the Feynman Technique.
@@ -26,6 +35,9 @@ ${question}
 STUDENT'S EXPLANATION:
 ${userExplanation}
 
+PERFORMANCE CONTEXT:
+${performanceContext}
+
 Analyze their explanation thoroughly and provide feedback. Consider:
 1. Accuracy - Did they get the core concepts right?
 2. Completeness - Did they cover the key points?
@@ -34,6 +46,11 @@ Analyze their explanation thoroughly and provide feedback. Consider:
 5. Depth - Do they understand the "why" or just the "what"?
 
 Be encouraging but honest. Identify specific gaps in understanding.
+
+Also detect learning style signals:
+- If they used analogies effectively, note "uses_analogies"
+- If they used technical terms correctly, note "technical_comfort"
+- If they described visual/spatial concepts, note "visual_thinking"
 
 Create a follow-up question that:
 - Builds on this topic but explores a different aspect
@@ -46,7 +63,8 @@ Respond in this exact JSON format:
   "whatYouNailed": ["specific thing 1", "specific thing 2", "specific thing 3"],
   "whatYouMissed": ["gap 1", "gap 2"],
   "howToImprove": ["actionable tip 1", "actionable tip 2", "actionable tip 3"],
-  "nextQuestion": "Your next question to deepen understanding..."
+  "nextQuestion": "Your next question to deepen understanding...",
+  "learningStyleSignals": ["signal1", "signal2"]
 }
 
 Important:
@@ -81,7 +99,8 @@ Important:
       howToImprove: Array.isArray(data.howToImprove) && data.howToImprove.length > 0
         ? data.howToImprove
         : ['Review the core concept', 'Try using a real-world analogy', 'Focus on explaining the "why"'],
-      nextQuestion: data.nextQuestion || `Can you explain another aspect of ${topic}?`
+      nextQuestion: data.nextQuestion || `Can you explain another aspect of ${topic}?`,
+      learningStyleSignals: Array.isArray(data.learningStyleSignals) ? data.learningStyleSignals : []
     }
 
     return NextResponse.json(analysis)
@@ -90,7 +109,7 @@ Important:
     console.error('Analyze API error:', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
     console.error('Error details:', message)
-    console.error('OPENAI_API_KEY present:', !!process.env.NEXT_PUBLIC_OPENAI_API_KEY)
+    console.error('OPENAI_API_KEY present:', !!process.env.OPENAI_API_KEY)
     return NextResponse.json(
       { error: `Failed to analyze explanation: ${message}` },
       { status: 500 }

@@ -104,7 +104,7 @@ export default function TeachingScreen({
       {/* Continue Button */}
       <button
         onClick={onComplete}
-        disabled={audioUrl && !hasListened}
+        disabled={!!(audioUrl && !hasListened)}
         className="w-full bg-gradient-to-r from-purple-600 to-pink-600
                  hover:from-purple-500 hover:to-pink-500
                  disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed

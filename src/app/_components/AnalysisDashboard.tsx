@@ -20,6 +20,7 @@ interface AnalysisDashboardProps {
   onTryAgain: () => void
   onNextQuestion: () => void
   onNewTopic: () => void
+  onStartQuiz?: () => void
 }
 
 function ScoreRing({ score }: { score: number }) {
@@ -72,11 +73,12 @@ export default function AnalysisDashboard({
   attemptHistory,
   onTryAgain,
   onNextQuestion,
-  onNewTopic
+  onNewTopic,
+  onStartQuiz
 }: AnalysisDashboardProps) {
-  const currentAttempt = attemptHistory[attemptHistory.length - 1]
+  const currentAttempt = attemptHistory[attemptHistory.length - 1]!
   const showImprovement = attemptHistory.length > 1
-  const previousScore = attemptHistory.length > 1 ? attemptHistory[attemptHistory.length - 2].score : 0
+  const previousScore = attemptHistory.length > 1 ? attemptHistory[attemptHistory.length - 2]!.score : 0
   const improvement = analysis.score - previousScore
 
   return (
@@ -197,6 +199,22 @@ export default function AnalysisDashboard({
           Next Question →
         </button>
       </div>
+
+      {onStartQuiz && (
+        <button
+          onClick={onStartQuiz}
+          className="w-full bg-gradient-to-r from-blue-600 to-cyan-600
+                   hover:from-blue-500 hover:to-cyan-500
+                   text-white font-semibold py-3 px-6 rounded-xl transition-all mt-3
+                   flex items-center justify-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Practice with Quiz
+        </button>
+      )}
 
       <button
         onClick={onNewTopic}

@@ -1,26 +1,38 @@
 import OpenAI from 'openai'
 import { NextRequest, NextResponse } from 'next/server'
+import type { LearnerProfile } from '@/lib/memory'
+import { getLearningStyleSummary, getTopicHistory } from '@/lib/memory'
 
 const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY || '',
+  apiKey: process.env.OPENAI_API_KEY || '',
 })
 
 export async function POST(request: NextRequest) {
   try {
-    const { topic, focusQuestion } = await request.json()
+    const { topic, focusQuestion, learnerProfile } = await request.json()
 
     if (!topic) {
       return NextResponse.json({ error: 'Topic is required' }, { status: 400 })
     }
 
+    // Build context from learner profile if available
+    let profileContext = ''
+    if (learnerProfile) {
+      const profile = learnerProfile as LearnerProfile
+      const styleContext = getLearningStyleSummary(profile)
+      const historyContext = getTopicHistory(profile, 3)
+      profileContext = `\n\nLEARNER CONTEXT:\n${styleContext}\n${historyContext}\n\nAdapt your teaching style to match their preferences.`
+    }
+
     const prompt = focusQuestion
-      ? `You are a brilliant teacher using the Feynman Technique. The student is learning about "${topic}" and needs help understanding this specific aspect: "${focusQuestion}"
+      ? `You are a brilliant teacher using the Feynman Technique. The student is learning about "${topic}" and needs help understanding this specific aspect: "${focusQuestion}"${profileContext}
 
 Create a teaching explanation that:
 1. Explains this specific concept clearly in simple language
 2. Uses a relatable analogy or real-world example
 3. Builds on foundational concepts
-4. Is about 60-90 seconds when read aloud (roughly 150-200 words)
+4. Adapts to the learner's preferred style
+5. Is about 60-90 seconds when read aloud (roughly 150-200 words)
 
 Then create ONE follow-up question that tests deep understanding of this concept. The question should require the student to explain HOW or WHY something works, not just WHAT it is.
 
@@ -29,14 +41,15 @@ Respond in this exact JSON format:
   "teaching": "Your teaching explanation here...",
   "question": "Your follow-up question here..."
 }`
-      : `You are a brilliant teacher using the Feynman Technique. A student wants to deeply understand: "${topic}"
+      : `You are a brilliant teacher using the Feynman Technique. A student wants to deeply understand: "${topic}"${profileContext}
 
 Create a teaching explanation that:
 1. Starts with WHY this matters or a hook that creates curiosity
 2. Breaks down the core concept using simple, jargon-free language
 3. Uses a vivid analogy or real-world example that makes it click
-4. Explains the key mechanism or process
-5. Is about 60-90 seconds when read aloud (roughly 150-200 words)
+4. Adapts to the learner's preferred style
+5. Explains the key mechanism or process
+6. Is about 60-90 seconds when read aloud (roughly 150-200 words)
 
 Then create ONE question that tests true understanding. The question should:
 - Focus on a specific aspect of the concept
@@ -66,7 +79,7 @@ Respond in this exact JSON format:
 
     if (process.env.ELEVENLABS_API_KEY) {
       try {
-        const audioResponse = await fetch('https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM', {
+        const audioResponse = await fetch('https://api.elevenlabs.io/v1/text-to-speech/UgBBYS2sOqTuMpoF3BR0', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -102,7 +115,7 @@ Respond in this exact JSON format:
   } catch (error) {
     console.error('Teach API error:', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('OPENAI_API_KEY present:', !!process.env.NEXT_PUBLIC_OPENAI_API_KEY)
+    console.error('OPENAI_API_KEY present:', !!process.env.OPENAI_API_KEY)
     console.error('ELEVENLABS_API_KEY present:', !!process.env.ELEVENLABS_API_KEY)
     return NextResponse.json(
       { error: `Failed to generate teaching content: ${message}` },
