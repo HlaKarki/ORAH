@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  Transform complex topics into simple explanations with AI-powered audio and PDF summaries.
+  Learn anything faster with guided explanations, voice input, and a review loop.
 </p>
 
 
@@ -15,56 +15,79 @@
 
 ## What is ExplainIt?
 
-Paste any topic, article, or concept. Select your audience level. Get a complete explanation with audio narration and a downloadable one-page PDF.
+ExplainIt is a learning companion that helps you turn a topic into a clear explanation you can actually repeat back. It combines:
+
+- A quick **explanation** you can listen to (Web Speech API) or play back if you recorded yourself
+- A **transcript view** with seekable segments
+- A **Feynman-style loop** (teach → answer → get feedback) via API routes
 
 ## Features
 
-- **AI Explanations** — AI-powered breakdowns tailored to your audience (5-year-old to expert)
-- **Audio Playback** — Listen to explanations via browser text-to-speech
-- **PDF Export** — Download a formatted one-page summary
-- **Voice Input** — Ask questions by speaking
+- **Audience levels** — Choose from 5-year-old → expert
+- **Voice input + recording** — Record your question and get live speech-to-text while you talk
+- **Audio playback** — Uses Web Speech API (TTS) or plays your recorded audio when available
+- **Transcript + seek** — Click around the transcript (and segments when recording) to jump in audio
+- **History** — All generated explanations are stored locally for quick access
+- **Saved items** — Bookmark explanations you want to keep
+- **Share links** — Share a direct `/results/[id]` URL (copy + social share shortcuts)
+- **Settings** — Voice selection, playback speed, theme, autoplay, default transcript view
+- **Teaching + grading loop (API)** — Teach and analyze explanations using the Feynman Technique
+
+> Note: **PDF download is currently a placeholder** (UI shows “PDF”, but download isn’t implemented yet).
 
 ## Quick Start
 
 ```bash
-# Clone and install
-git clone https://github.com/yourusername/explainit.git
-cd explainit
+# Install
 bun install
 
-# Configure
+# Configure env
 cp .env.example .env
-# Add your OPENAI_API_KEY to .env
+# Add required keys (see Environment Variables below)
 
 # Run
 bun dev
 ```
 
-Open [localhost:3000](http://localhost:3000)
+Open `http://localhost:3000`
+
+## Environment Variables
+
+Create a `.env` file (copy from `.env.example`) and set:
+
+- **`NEXT_PUBLIC_OPENAI_API_KEY`**: used by server routes like `/api/teach` and `/api/analyze`
+- **`ELEVENLABS_API_KEY`**: used by `/api/transcribe` (speech-to-text) and optional ElevenLabs TTS in `/api/teach`
+
+## Pages
+
+- **Home**: input topic (text or voice), pick audience/output
+- **Results**: audio player, summary, transcript, key terms, share/save
+- **History**: search/filter and revisit prior explanations
+- **Saved**: your bookmarked explanations
+- **Settings**: voice/speed/theme/autoplay/transcript defaults
+- **Auth**: UI-only login/register screen (no backend yet)
 
 ## Tech Stack
 
-- **Next.js 14** — App Router
-- **Tailwind CSS** — Styling
-- **OpenAI** — GPT-4o-mini
-- **Web Speech API** — Text-to-speech
-- **jsPDF** — PDF generation
+- **Next.js 15** — App Router
+- **React 19**
+- **Tailwind CSS v4**
+- **Web Speech API** — Text-to-speech + in-browser speech recognition (where supported)
+- **OpenAI SDK** — Teaching + analysis routes
+- **ElevenLabs** — Speech-to-text (and optional TTS in `/api/teach`)
+- **LocalStorage** — History / saved / settings persistence
 
 ## API
 
-```typescript
-interface ExplanationResponse {
-  title: string;
-  script_for_audio: string;
-  one_page_content: {
-    summary_1_sentence: string;
-    analogy: string;
-    key_points: string[];
-    key_terms: string[];
-    why_it_matters: string;
-  }
-}
-```
+### Routes
+
+- **`POST /api/teach`**: returns a short teaching explanation + a deep-understanding question (and optionally `audioUrl`)
+- **`POST /api/analyze`**: scores and gives feedback on a user’s explanation + proposes the next question
+- **`POST /api/transcribe`**: converts an uploaded audio blob to text via ElevenLabs Speech-to-Text
+
+### Data Model (frontend)
+
+The main UI flows around `ExplanationResponse` in `src/types/index.ts` (id, title, script, one-page content, optional recording segments).
 
 ## License
 
